@@ -50,8 +50,25 @@ jobs:
           haxelib git flxanimate https://github.com/ShadowMario/flxanimate dev 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
           haxelib list
 
+      - name: Show the toolchain
+        run: |
+          {
+            haxe --version
+            haxelib list
+            echo "--- lime native libraries:"
+            ls -la "$(haxelib libpath lime)"/ndll/* 2>&1 | head -20
+          } 2>&1 | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::notice title=Toolchain::'+t)"
+
       - name: Build (html5, release)
-        run: haxelib run lime build Project.xml html5 -release
+        run: |
+          set +e
+          haxelib run lime build Project.xml html5 -release 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # the last lines of the log also go to the run's annotations, so the failure is visible without opening the log
+            grep -v "^Called from" build.log | tail -40 | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=Lime build failed::'+t)"
+          fi
+          exit $status
 
       - name: Check the build
         run: |
