@@ -1,0 +1,79 @@
+name: Build and deploy to GitHub Pages
+
+# Builds Psych Engine for the web (HTML5) and publishes it with GitHub Pages.
+# One-time setup: in the repository go to  Settings > Pages > Build and deployment > Source  and pick "GitHub Actions".
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# a newer push replaces the deployment that is still running
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      # The versions below are the ones the port was developed and tested with.
+      - name: Restore haxelib cache
+        uses: actions/cache@v4
+        with:
+          path: ~/haxelib
+          key: haxelib-${{ runner.os }}-${{ hashFiles('.github/workflows/pages.yml') }}
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib setup ~/haxelib
+          haxelib install lime 8.1.2
+          haxelib install openfl 9.3.2
+          haxelib install flixel 5.5.0
+          haxelib install flixel-addons 3.2.1
+          haxelib install flixel-ui 2.5.0
+          haxelib install tjson
+          haxelib install format
+          # Lime's command line tools ask for it even when the target is not C++ (nothing gets compiled with it)
+          haxelib install hxcpp
+          haxelib git flxanimate https://github.com/ShadowMario/flxanimate dev 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+          haxelib list
+
+      - name: Build (html5, release)
+        run: haxelib run lime build Project.xml html5 -release
+
+      - name: Check the build
+        run: |
+          cd export/release/html5/bin
+          test -f index.html
+          test -f PsychEngine.js
+          du -sh .
+          # GitHub rejects files over 100 MB and a Pages site over 1 GB
+          if [ -n "$(find . -type f -size +95M)" ]; then echo "A file is too big for GitHub Pages:"; find . -type f -size +95M; exit 1; fi
+          if [ "$(du -sm . | cut -f1)" -gt 950 ]; then echo "The site is too big for GitHub Pages"; exit 1; fi
+          touch .nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: export/release/html5/bin
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
