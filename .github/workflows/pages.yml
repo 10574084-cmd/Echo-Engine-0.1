@@ -47,7 +47,7 @@ jobs:
           haxelib install format
           # Lime's command line tools ask for it even when the target is not C++ (nothing gets compiled with it)
           haxelib install hxcpp
-          haxelib git flxanimate https://github.com/ShadowMario/flxanimate dev 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+          haxelib git flxanimate https://github.com/ShadowMario/flxanimate 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
           haxelib list
 
       - name: Show the toolchain
