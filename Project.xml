@@ -61,6 +61,10 @@
 	<!-- html5 only: stand-ins for sys.FileSystem / sys.io.File backed by an in-memory + IndexedDB file system -->
 	<classpath name="webshim" if="html5" />
 
+	<!-- web page: asks "Are you using a phone?" and draws the on-screen controls (webshim/html5) -->
+	<template path="webshim/html5/index.html" rename="index.html" if="html5"/>
+	<template path="webshim/html5/echo-touch.js" rename="echo-touch.js" if="html5"/>
+
 	<!-- __________________________ Game Assets & Etc. __________________________ -->
 	
 	<!-- Turn on Crash Handler -->

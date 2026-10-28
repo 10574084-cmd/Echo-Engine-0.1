@@ -1677,7 +1677,10 @@ class PlayState extends MusicBeatState
 
 	override public function update(elapsed:Float)
 	{
-		#if html5 onlineUpdate(elapsed); #end
+		#if html5
+		onlineUpdate(elapsed);
+		webfs.TouchBridge.setPlaying(!paused && subState == null); // phones: note buttons while playing, d-pad otherwise
+		#end
 
 		if(!inCutscene && !paused && !freezeCamera) {
 			FlxG.camera.followLerp = 2.4 * cameraSpeed * playbackRate;
@@ -3079,6 +3082,7 @@ class PlayState extends MusicBeatState
 
 	override function destroy() {
 		#if html5
+		webfs.TouchBridge.setPlaying(false);
 		// left the song before the end: tell the rival
 		if(online.Session.active && !onlineFinished)
 			online.Session.sendFinal(songScore, songMisses, onlineAccuracy(), true);

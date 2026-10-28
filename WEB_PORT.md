@@ -52,7 +52,7 @@ Cómo funciona: el sitio es estático (GitHub Pages), así que no hay servidor d
 
 * **Lua y HScript no están disponibles** (dependen de librerías nativas de C++). Los mods que usan scripts, eventos o notetypes personalizados cargarán, pero sin esa parte.
 * **Sin videos** de cutscenes y **sin Discord Rich Presence**.
-* **Sin controles táctiles**: se juega con teclado (el mando no se probó).
+* **Teléfonos:** al abrir la página pregunta una vez *"Are you using a phone?"*. Si respondes que sí, aparecen botones en pantalla (cruceta + OK/BACK en los menús, 4 botones de notas y pausa durante las canciones; admite varios dedos a la vez) y se pide pantalla completa en horizontal. La respuesta se recuerda; para cambiarla usa `?phone=ask` al final de la dirección (o `?phone=1` / `?phone=0`). En computadora se juega con teclado (el mando no se probó).
 * Al abrir la página se descargan unos **75 MB** (todos los assets compartidos, igual que hace el motor original). Las canciones y los assets de cada semana se descargan **solo cuando se juegan** (unos pocos MB por canción).
 * No se puede abrir una "carpeta de mods": se usa el importador de `.zip`.
 
