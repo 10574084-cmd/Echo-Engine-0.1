@@ -46,7 +46,11 @@ jobs:
           haxelib install tjson
           # Lime's command line tools ask for it even when the target is not C++ (nothing gets compiled with it)
           haxelib install hxcpp
+          # a restored cache may hold a newer flxanimate: install it again and force the exact commit this port was written for
+          haxelib remove flxanimate || true
           haxelib git flxanimate https://github.com/ShadowMario/flxanimate 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+          git -C "$(haxelib libpath flxanimate)" checkout --force 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+          git -C "$(haxelib libpath flxanimate)" log -1 --oneline
           haxelib list
 
       - name: Show the toolchain
