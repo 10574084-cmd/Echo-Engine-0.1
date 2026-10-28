@@ -173,6 +173,9 @@ class FreeplayState extends MusicBeatState
 		
 		changeSelection();
 		updateTexts();
+		#if html5
+		onlineSetup();
+		#end
 		super.create();
 	}
 
@@ -190,6 +193,147 @@ class FreeplayState extends MusicBeatState
 	function weekIsLocked(name:String):Bool {
 		var leWeek:WeekData = WeekData.weeksLoaded.get(name);
 		return (!leWeek.startUnlocked && leWeek.weekBefore.length > 0 && (!StoryMenuState.weekCompleted.exists(leWeek.weekBefore) || !StoryMenuState.weekCompleted.get(leWeek.weekBefore)));
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// Online duel (html5 only)
+	// ------------------------------------------------------------------------------------------
+
+	inline function onlineGuest():Bool
+	{
+		#if html5
+		return online.Session.active && !online.Session.isHost;
+		#else
+		return false;
+		#end
+	}
+
+	#if html5
+	var onlineText:FlxText;
+	var onlineMissing:String = null;
+	var remoteStartRequested:Bool = false;
+
+	function onlineSongName(index:Int):String
+		return Paths.formatToSongPath(songs[index].songName);
+
+	function onlineSetup():Void
+	{
+		if(!online.Session.active) return;
+
+		onlineText = new FlxText(8, FlxG.height - 54, FlxG.width - 16, '', 20);
+		onlineText.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		onlineText.scrollFactor.set();
+		add(onlineText);
+
+		online.Session.onSelect = onlineRemoteSelect;
+		online.Session.onStart = function(song:String, diff:String)
+		{
+			onlineRemoteSelect(song, diff);
+			if(onlineMissing == null) remoteStartRequested = true;
+		};
+		online.Session.onLobbyChanged = function() onlineRefresh();
+		online.Session.onRivalLeft = function() onlineRefresh();
+		online.Session.sendLobby([for(i in 0...songs.length) onlineSongName(i)]);
+		onlineRefresh();
+		onlineSendSelection();
+	}
+
+	function onlineRefresh(?message:String):Void
+	{
+		if(onlineText == null) return;
+		if(message == null)
+		{
+			if(online.Session.rivalLeft) message = 'Your rival left the room. Press BACK to leave.';
+			else if(onlineMissing != null) message = 'You do not have the song "$onlineMissing". The host cannot start it.';
+			else if(online.Session.isHost) message = online.Session.rivalInLobby ? 'ONLINE - you are the host: pick a song and press ENTER' : 'ONLINE - waiting for your rival to be ready...';
+			else message = 'ONLINE - the host picks the song';
+		}
+		onlineText.text = message;
+	}
+
+	function onlineSendSelection():Void
+	{
+		if(online.Session.active && online.Session.isHost && songs.length > 0 && curSelected < songs.length)
+			online.Session.sendSelect(onlineSongName(curSelected), Difficulty.getString(curDifficulty));
+	}
+
+	/** The host moved to another song (or started one): follow it. */
+	function onlineRemoteSelect(song:String, diff:String):Void
+	{
+		var found = -1;
+		for(i in 0...songs.length)
+			if(onlineSongName(i) == song) { found = i; break; }
+
+		if(found < 0)
+		{
+			onlineMissing = song;
+			onlineRefresh();
+			return;
+		}
+		onlineMissing = null;
+
+		if(player.playingMusic) onlineStopPreview();
+		curSelected = found;
+		changeSelection(0, false);
+		var d = -1;
+		for(i in 0...Difficulty.list.length)
+			if(Difficulty.getString(i).toLowerCase() == diff.toLowerCase()) { d = i; break; }
+		if(d >= 0)
+		{
+			curDifficulty = d;
+			changeDiff();
+		}
+		onlineRefresh();
+	}
+
+	function onlineStopPreview():Void
+	{
+		FlxG.sound.music.stop();
+		destroyFreeplayVocals();
+		FlxG.sound.music.volume = 0;
+		instPlaying = -1;
+		player.playingMusic = false;
+		player.switchPlayMusic();
+		FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
+	}
+	#end
+
+	/** Decides if ENTER (or the host's "start") starts the selected song. */
+	function onlineAccept(pressed:Bool):Bool
+	{
+		#if html5
+		if(online.Session.active)
+		{
+			if(remoteStartRequested)
+			{
+				remoteStartRequested = false;
+				if(player.playingMusic) onlineStopPreview();
+				return true;
+			}
+			if(!pressed) return false;
+			if(!online.Session.isHost)
+			{
+				FlxG.sound.play(Paths.sound('cancelMenu'));
+				return false;
+			}
+			if(player.playingMusic) return false; // stop the preview first
+
+			var name = onlineSongName(curSelected);
+			var problem:String = null;
+			if(online.Session.rivalLeft) problem = 'Your rival left the room. Press BACK to leave.';
+			else if(!online.Session.rivalInLobby) problem = 'Your rival is not ready yet...';
+			else if(!online.Session.rivalHasSong(name)) problem = 'Your rival does not have this song.';
+			if(problem != null)
+			{
+				FlxG.sound.play(Paths.sound('cancelMenu'));
+				onlineRefresh(problem);
+				return false;
+			}
+			online.Session.sendStart(name, Difficulty.getString(curDifficulty));
+			return true;
+		}
+		#end
+		return pressed;
 	}
 
 	var instPlaying:Int = -1;
@@ -226,7 +370,7 @@ class FreeplayState extends MusicBeatState
 			scoreText.text = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit.join('.') + '%)';
 			positionHighscore();
 			
-			if(songs.length > 1)
+			if(songs.length > 1 && !onlineGuest())
 			{
 				if(FlxG.keys.justPressed.HOME)
 				{
@@ -268,12 +412,12 @@ class FreeplayState extends MusicBeatState
 				}
 			}
 
-			if (controls.UI_LEFT_P)
+			if (controls.UI_LEFT_P && !onlineGuest())
 			{
 				changeDiff(-1);
 				_updateSongLastDifficulty();
 			}
-			else if (controls.UI_RIGHT_P)
+			else if (controls.UI_RIGHT_P && !onlineGuest())
 			{
 				changeDiff(1);
 				_updateSongLastDifficulty();
@@ -302,11 +446,19 @@ class FreeplayState extends MusicBeatState
 					colorTween.cancel();
 				}
 				FlxG.sound.play(Paths.sound('cancelMenu'));
+				#if html5
+				if(online.Session.active)
+				{
+					online.Session.end();
+					MusicBeatState.switchState(new online.OnlineState());
+				}
+				else
+				#end
 				MusicBeatState.switchState(new MainMenuState());
 			}
 		}
 
-		if(FlxG.keys.justPressed.CONTROL && !player.playingMusic)
+		if(FlxG.keys.justPressed.CONTROL && !player.playingMusic #if html5 && !online.Session.active #end)
 		{
 			persistentUpdate = false;
 			openSubState(new GameplayChangersSubstate());
@@ -352,7 +504,7 @@ class FreeplayState extends MusicBeatState
 				player.pauseOrResume(player.paused);
 			}
 		}
-		else if (controls.ACCEPT && !player.playingMusic)
+		else if (onlineAccept(controls.ACCEPT) && !player.playingMusic)
 		{
 			persistentUpdate = false;
 			var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
@@ -449,6 +601,9 @@ class FreeplayState extends MusicBeatState
 		positionHighscore();
 		missingText.visible = false;
 		missingTextBG.visible = false;
+		#if html5
+		onlineSendSelection();
+		#end
 	}
 
 	function changeSelection(change:Int = 0, playSound:Bool = true)
@@ -560,6 +715,10 @@ class FreeplayState extends MusicBeatState
 
 	override function destroy():Void
 	{
+		#if html5
+		online.Session.onSelect = online.Session.onStart = null;
+		online.Session.onLobbyChanged = online.Session.onRivalLeft = null;
+		#end
 		super.destroy();
 
 		FlxG.autoPause = ClientPrefs.data.autoPause;

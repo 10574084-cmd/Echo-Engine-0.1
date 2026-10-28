@@ -294,6 +294,16 @@ class PlayState extends MusicBeatState
 		instakillOnMiss = ClientPrefs.getGameplaySetting('instakill');
 		practiceMode = ClientPrefs.getGameplaySetting('practice');
 		cpuControlled = ClientPrefs.getGameplaySetting('botplay');
+		#if html5
+		// online duel: everybody plays with the same rules (no botplay, no instakill) and nobody can die, only the score counts
+		if(online.Session.active)
+		{
+			instakillOnMiss = false;
+			practiceMode = true;
+			cpuControlled = false;
+			chartingMode = false;
+		}
+		#end
 		guitarHeroSustains = ClientPrefs.data.guitarHeroSustains;
 
 		// var gameCam:FlxCamera = FlxG.camera;
@@ -1624,8 +1634,51 @@ class PlayState extends MusicBeatState
 	var freezeCamera:Bool = false;
 	var allowDebugKeys:Bool = true;
 
+	#if html5
+	var rivalText:FlxText;
+	var onlineFinished:Bool = false;
+
+	function onlineAccuracy():Float
+	{
+		var acc:Float = ratingPercent;
+		return Math.isNaN(acc) ? 0 : acc;
+	}
+
+	/** Online duel: sends my live score and shows the rival's. */
+	function onlineUpdate(elapsed:Float):Void
+	{
+		if(!online.Session.active) return;
+
+		if(rivalText == null)
+		{
+			rivalText = new FlxText(10, ClientPrefs.data.downScroll ? 110 : FlxG.height - 190, 320, '', 22);
+			rivalText.setFormat(Paths.font('vcr.ttf'), 22, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			rivalText.cameras = [camHUD];
+			rivalText.scrollFactor.set();
+			add(rivalText);
+		}
+
+		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy());
+
+		rivalText.text = online.Session.rivalLeft ? 'RIVAL LEFT' :
+			'RIVAL\nScore: ${online.Session.rivalScore}\nMisses: ${online.Session.rivalMisses} | ${Math.round(online.Session.rivalAccuracy * 100) / 100}%';
+	}
+
+	function onlineFinish():Void
+	{
+		onlineFinished = true;
+		var acc = onlineAccuracy();
+		online.Session.sendFinal(songScore, songMisses, acc, false);
+		persistentUpdate = false;
+		persistentDraw = true;
+		openSubState(new online.ResultSubState(songScore, songMisses, acc));
+	}
+	#end
+
 	override public function update(elapsed:Float)
 	{
+		#if html5 onlineUpdate(elapsed); #end
+
 		if(!inCutscene && !paused && !freezeCamera) {
 			FlxG.camera.followLerp = 2.4 * cameraSpeed * playbackRate;
 			if(!startingSong && !endingSong && boyfriend.getAnimationName().startsWith('idle')) {
@@ -2324,6 +2377,16 @@ class PlayState extends MusicBeatState
 		var ret:Dynamic = callOnScripts('onEndSong', null, true);
 		if(ret != LuaUtils.Function_Stop && !transitioning)
 		{
+			#if html5
+			if(online.Session.active)
+			{
+				// the result screen replaces the usual way out of the song
+				transitioning = true;
+				onlineFinish();
+				return true;
+			}
+			#end
+
 			#if !switch
 			var percent:Float = ratingPercent;
 			if(Math.isNaN(percent)) percent = 0;
@@ -3015,6 +3078,12 @@ class PlayState extends MusicBeatState
 	}
 
 	override function destroy() {
+		#if html5
+		// left the song before the end: tell the rival
+		if(online.Session.active && !onlineFinished)
+			online.Session.sendFinal(songScore, songMisses, onlineAccuracy(), true);
+		#end
+
 		#if LUA_ALLOWED
 		for (lua in luaArray)
 		{

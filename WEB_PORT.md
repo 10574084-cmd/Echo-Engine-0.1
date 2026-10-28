@@ -35,6 +35,19 @@ En el menú principal entra en **MODS**.
 * **Fuentes:** las fuentes `.ttf`/`.otf`/`.woff`/`.woff2` de `mods/<mod>/fonts/` también se usan (por ejemplo, un `fonts/vcr.ttf` propio reemplaza al original).
 * **Errores:** si algo falla, aparece un panel rojo abajo con el error y un botón **Copy**, para poder copiarlo y reportarlo (en vez de quedarse en pantalla negra sin saber por qué).
 
+## Modo online (BETA)
+
+En el menú principal entra en **ONLINE**: duelo **1 contra 1** por código de sala.
+
+1. Uno elige **Create room** y comparte el código de 5 letras que aparece.
+2. El otro elige **Join room** y escribe el código.
+3. Los dos pasan a la lista de canciones: **el anfitrión elige la canción** (el invitado ve la misma selección) y pulsa ENTER.
+4. Los dos juegan la misma canción a la vez; cada uno ve el **marcador del rival en vivo** y al final una pantalla de resultado (gana quien tiene más puntos; si empatan, más precisión).
+
+Reglas: sin botplay, sin modificadores y sin morir (solo cuenta la puntuación); no se puede reiniciar la canción. Ambos jugadores deben tener la canción (los mods se importan en cada navegador); si el rival no la tiene, el anfitrión no puede empezarla.
+
+Cómo funciona: el sitio es estático (GitHub Pages), así que no hay servidor de juego. Los navegadores se conectan **directamente** (WebRTC) mediante [PeerJS](https://peerjs.com); su servidor público solo sirve para que los dos se encuentren. La librería se descarga desde unpkg/jsDelivr al abrir ONLINE. Si algún jugador está tras una red muy restrictiva, la conexión puede fallar.
+
 ### Limitaciones de la versión web
 
 * **Lua y HScript no están disponibles** (dependen de librerías nativas de C++). Los mods que usan scripts, eventos o notetypes personalizados cargarán, pero sin esa parte.

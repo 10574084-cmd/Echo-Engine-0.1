@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="menu_online.png">
+	<SubTexture name="online basic0000" x="4" y="4" width="578" height="138"/>
+	<SubTexture name="online white0000" x="4" y="146" width="721" height="193"/>
+</TextureAtlas>

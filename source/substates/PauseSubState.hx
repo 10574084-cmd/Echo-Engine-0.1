@@ -36,6 +36,15 @@ class PauseSubState extends MusicBeatSubstate
 	{
 		if(Difficulty.list.length < 2) menuItemsOG.remove('Change Difficulty'); //No need to change difficulty if there is only one!
 
+		#if html5
+		// online duel: the song can't be restarted or changed in the middle of it
+		if(online.Session.active)
+		{
+			menuItemsOG.remove('Restart Song');
+			menuItemsOG.remove('Change Difficulty');
+		}
+		#end
+
 		if(PlayState.chartingMode)
 		{
 			menuItemsOG.insert(2, 'Leave Charting Mode');

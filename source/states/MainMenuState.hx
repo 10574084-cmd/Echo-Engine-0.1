@@ -18,6 +18,7 @@ class MainMenuState extends MusicBeatState
 		'story_mode',
 		'freeplay',
 		#if MODS_ALLOWED 'mods', #end
+		#if html5 'online', #end
 		#if ACHIEVEMENTS_ALLOWED 'awards', #end
 		'credits',
 		#if !switch 'donate', #end
@@ -170,6 +171,11 @@ class MainMenuState extends MusicBeatState
 							#if ACHIEVEMENTS_ALLOWED
 							case 'awards':
 								MusicBeatState.switchState(new AchievementsMenuState());
+							#end
+
+							#if html5
+							case 'online':
+								MusicBeatState.switchState(new online.OnlineState());
 							#end
 
 							case 'credits':
