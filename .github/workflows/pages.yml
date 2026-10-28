@@ -44,7 +44,6 @@ jobs:
           haxelib install flixel-addons 3.2.1
           haxelib install flixel-ui 2.5.0
           haxelib install tjson
-          haxelib install format
           # Lime's command line tools ask for it even when the target is not C++ (nothing gets compiled with it)
           haxelib install hxcpp
           haxelib git flxanimate https://github.com/ShadowMario/flxanimate 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a

@@ -5,7 +5,6 @@ package webfs;
 #end
 
 import haxe.io.Bytes;
-import haxe.io.BytesInput;
 import lime.media.AudioBuffer;
 import openfl.display.BitmapData;
 import openfl.media.Sound;
@@ -15,7 +14,7 @@ import openfl.utils.ByteArray;
  * Turns the raw bytes of a mod file (kept in the virtual file system) into something the engine can use.
  *
  * Browsers can only decode images asynchronously, but Psych Engine asks for images synchronously
- * (`Paths.image` has to return right away), so PNGs are decoded in plain Haxe with the `format` library.
+ * (`Paths.image` has to return right away), so PNGs are decoded in plain Haxe (see PngDecoder: every colour type, bit depth and interlacing).
  *
  * Sounds can be created synchronously from bytes, but they are only usable (length, playback) once the browser has
  * loaded them; `preloadSound` does that and is called from the loading screen for the files a song is going to need.
@@ -53,30 +52,10 @@ class MediaDecoder
 
 	public static function decodePng(bytes:Bytes):BitmapData
 	{
-		var reader = new format.png.Reader(new BytesInput(bytes));
-		reader.checkCRC = false; // a lot faster, and a broken file would fail to inflate anyway
-		var png = reader.read();
-
-		var header = format.png.Tools.getHeader(png);
-		var width = header.width;
-		var height = header.height;
-
-		// extract32 gives BGRA, BitmapData.setPixels wants ARGB
-		var bgra = format.png.Tools.extract32(png);
-		var argb = Bytes.alloc(width * height * 4);
-		var i = 0;
-		var length = width * height * 4;
-		while (i < length)
-		{
-			argb.set(i, bgra.get(i + 3));
-			argb.set(i + 1, bgra.get(i + 2));
-			argb.set(i + 2, bgra.get(i + 1));
-			argb.set(i + 3, bgra.get(i));
-			i += 4;
-		}
-
-		var bitmap = new BitmapData(width, height, true, 0);
-		bitmap.setPixels(bitmap.rect, ByteArray.fromBytes(argb));
+		if (!PngDecoder.isPng(bytes)) throw "not a PNG file";
+		var image = PngDecoder.decode(bytes);
+		var bitmap = new BitmapData(image.width, image.height, true, 0);
+		bitmap.setPixels(bitmap.rect, ByteArray.fromBytes(image.argb));
 		return bitmap;
 	}
 
@@ -140,6 +119,12 @@ class MediaDecoder
 			onDone();
 		};
 		howl.once("load", finish);
+		// a sound the browser never finishes loading must not keep the loading screen waiting forever
+		js.Browser.window.setTimeout(function()
+		{
+			if (!finished) trace('Timed out loading the sound "$path"');
+			finish();
+		}, 15000);
 		howl.once("loaderror", function(_, error)
 		{
 			trace('The browser could not load the sound "$path": $error');

@@ -78,6 +78,7 @@ class ModImporter
 	public static function deleteMod(folder:String):Void
 	{
 		VirtualFS.deleteDirectoryRecursive('mods/$folder');
+		FontLoader.registerAll(function() {}); // drops the fonts of the removed mod
 		backend.Mods.updatedOnState = false; // rescan so modsList.txt forgets it
 		toast('Removed "$folder".');
 	}
@@ -140,8 +141,12 @@ class ModImporter
 		else
 			toast('Imported ${result.mods.length} mods (${result.files} files).');
 
-		for (callback in onImported.copy()) callback(result);
-		next();
+		// the new mod's fonts have to be registered before anything shows text with them
+		FontLoader.registerAll(function()
+		{
+			for (callback in onImported.copy()) callback(result);
+			next();
+		});
 	}
 
 	// ------------------------------------------------------------------------------------------

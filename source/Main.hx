@@ -86,8 +86,9 @@ class Main extends Sprite
 		}
 
 		#if html5
+		webfs.ErrorOverlay.install();
 		// Restore the mods imported in previous sessions before anything reads the (virtual) file system
-		webfs.VirtualFS.init(setupGame);
+		webfs.VirtualFS.init(function() webfs.FontLoader.registerAll(setupGame));
 		#else
 		setupGame();
 		#end
