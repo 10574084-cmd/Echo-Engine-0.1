@@ -18,7 +18,12 @@ class NoteTypesConfig
 		if(noteTypesData.exists(name)) return noteTypesData.get(name);
 
 		var str:String = Paths.getTextFromFile('custom_notetypes/$name.txt');
-		if(str == null || !str.contains(':') || !str.contains('=')) noteTypesData.set(name, null);
+		// (a null String only throws on JS, so the note types that are just a .lua script crashed the web version)
+		if(str == null || !(str.contains(':') || str.contains('=')))
+		{
+			noteTypesData.set(name, null);
+			return null;
+		}
 
 		var parsed:Array<NoteTypeProperty> = [];
 		var lines:Array<String> = CoolUtil.listFromString(str);
