@@ -2,7 +2,7 @@
 
 **A Friday Night Funkin' engine focused on improvements, bug fixes, and new features.**
 
-**Play online:** https://10574084-cmd.github.io/Echo-Engine-0.1
+**Play online:** https://10574084-cmd.github.io/Echo-Engine-1.1.0
 
 ## About
 
