@@ -36,6 +36,8 @@ class Session
 	public static var rivalAccuracy:Float = 0;
 	public static var rivalFinished:Bool = false;
 	public static var rivalQuit:Bool = false;
+	/** The rival plays with botplay (admin option): shown next to its score. */
+	public static var rivalBot:Bool = false;
 
 	// callbacks of whichever screen is open
 	public static var onSelect:String->String->Void = null;
@@ -86,6 +88,7 @@ class Session
 		rivalAccuracy = 0;
 		rivalFinished = false;
 		rivalQuit = false;
+		rivalBot = false;
 		sinceStat = 0;
 	}
 
@@ -117,11 +120,13 @@ class Session
 				rivalScore = msg.s;
 				rivalMisses = msg.m;
 				rivalAccuracy = msg.a;
+				rivalBot = msg.bot == true;
 			case 'fin':
 				rivalScore = msg.s;
 				rivalMisses = msg.m;
 				rivalAccuracy = msg.a;
 				rivalQuit = msg.quit == true;
+				rivalBot = msg.bot == true;
 				rivalFinished = true;
 				if (onRivalFinished != null) onRivalFinished();
 			case 'bye':
@@ -170,17 +175,17 @@ class Session
 	// ------------------------------------------------------------------------------------------
 
 	/** Call every frame while playing; sends the live score a few times per second. */
-	public static function tick(elapsed:Float, score:Int, misses:Int, accuracy:Float):Void
+	public static function tick(elapsed:Float, score:Int, misses:Int, accuracy:Float, bot:Bool = false):Void
 	{
 		sinceStat += elapsed;
 		if (sinceStat < 0.2) return;
 		sinceStat = 0;
-		Net.send({t: 'stat', s: score, m: misses, a: Math.round(accuracy * 10000) / 100});
+		Net.send({t: 'stat', s: score, m: misses, a: Math.round(accuracy * 10000) / 100, bot: bot});
 	}
 
-	public static function sendFinal(score:Int, misses:Int, accuracy:Float, quit:Bool):Void
+	public static function sendFinal(score:Int, misses:Int, accuracy:Float, quit:Bool, bot:Bool = false):Void
 	{
-		Net.send({t: 'fin', s: score, m: misses, a: Math.round(accuracy * 10000) / 100, quit: quit});
+		Net.send({t: 'fin', s: score, m: misses, a: Math.round(accuracy * 10000) / 100, quit: quit, bot: bot});
 	}
 }
 #end

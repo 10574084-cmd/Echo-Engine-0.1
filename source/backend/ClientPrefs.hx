@@ -88,6 +88,10 @@ import states.TitleState;
 	public var echoQuickBoot:Bool = false;
 	public var echoRandomMusic:Bool = false;
 	public var echoLabAlwaysClean:Bool = false;
+	public var echoSecret:Bool = false;
+	public var echoAdmin:Bool = false;
+	public var echoAdminBot:Bool = false;
+	public var echoAdminGod:Bool = false;
 }
 
 class ClientPrefs {

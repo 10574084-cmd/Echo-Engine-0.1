@@ -303,14 +303,14 @@ class PlayState extends MusicBeatState
 		healthLoss = ClientPrefs.getGameplaySetting('healthloss');
 		instakillOnMiss = ClientPrefs.getGameplaySetting('instakill');
 		practiceMode = ClientPrefs.getGameplaySetting('practice');
-		cpuControlled = ClientPrefs.getGameplaySetting('botplay');
+		cpuControlled = ClientPrefs.getGameplaySetting('botplay') || echo.EchoAdmin.botplay();
 		#if html5
 		// online duel: everybody plays with the same rules (no botplay, no instakill) and nobody can die, only the score counts
 		if(online.Session.active)
 		{
 			instakillOnMiss = false;
 			practiceMode = true;
-			cpuControlled = false;
+			cpuControlled = echo.EchoAdmin.botplay(); // admin only; the rival is told (see Session.tick)
 			chartingMode = false;
 			// the host is Boyfriend, the guest is the character they picked: each one sees itself on the player's side
 			SONG.player1 = online.Session.myChar;
@@ -1683,17 +1683,17 @@ class PlayState extends MusicBeatState
 			add(rivalText);
 		}
 
-		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy());
+		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy(), cpuControlled);
 
 		rivalText.text = online.Session.rivalLeft ? 'RIVAL LEFT' :
-			'RIVAL (${online.Session.rivalChar})\nScore: ${online.Session.rivalScore}\nMisses: ${online.Session.rivalMisses} | ${Math.round(online.Session.rivalAccuracy * 100) / 100}%';
+			'RIVAL (${online.Session.rivalChar})${online.Session.rivalBot ? ' [BOT]' : ''}\nScore: ${online.Session.rivalScore}\nMisses: ${online.Session.rivalMisses} | ${Math.round(online.Session.rivalAccuracy * 100) / 100}%';
 	}
 
 	function onlineFinish():Void
 	{
 		onlineFinished = true;
 		var acc = onlineAccuracy();
-		online.Session.sendFinal(songScore, songMisses, acc, false);
+		online.Session.sendFinal(songScore, songMisses, acc, false, cpuControlled);
 		persistentUpdate = false;
 		persistentDraw = true;
 		openSubState(new online.ResultSubState(songScore, songMisses, acc));
@@ -1740,7 +1740,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		if(!endingSong && !inCutscene && allowDebugKeys)
+		if(!endingSong && !inCutscene && allowDebugKeys && echo.EchoAdmin.editorsAllowed())
 		{
 			if (controls.justPressed('debug_1'))
 				openChartEditor();
@@ -1750,6 +1750,8 @@ class PlayState extends MusicBeatState
 
 		if (healthBar.bounds.max != null && health > healthBar.bounds.max)
 			health = healthBar.bounds.max;
+		if (echo.EchoAdmin.god() && healthBar.bounds.max != null)
+			health = healthBar.bounds.max; // admin: god mode
 
 		updateIconsScale(elapsed);
 		updateIconsPosition();
@@ -3140,7 +3142,7 @@ class PlayState extends MusicBeatState
 		webfs.TouchBridge.setPlaying(false);
 		// left the song before the end: tell the rival
 		if(online.Session.active && !onlineFinished)
-			online.Session.sendFinal(songScore, songMisses, onlineAccuracy(), true);
+			online.Session.sendFinal(songScore, songMisses, onlineAccuracy(), true, cpuControlled);
 		#end
 
 		#if LUA_ALLOWED

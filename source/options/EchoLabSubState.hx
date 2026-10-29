@@ -40,6 +40,37 @@ class EchoLabSubState extends BaseOptionsMenu
 			'EXPERIMENTAL: frees the images and sounds every time you change screen.\nSaves memory, but screens and songs take longer to open.',
 			'echoLabAlwaysClean', 'bool'));
 
+		// hidden: appears after typing "echoass" in the main menu
+		if (echo.EchoAdmin.secretFound())
+		{
+			addOption(EchoOptions.action('xd',
+				echo.EchoAdmin.isAdmin() ? 'Admin options.' : 'Restricted. You need a code.',
+				function()
+				{
+					if (echo.EchoAdmin.isAdmin())
+					{
+						openSubState(new EchoAdminSubState());
+						return;
+					}
+					#if html5
+					var typed:String = js.Browser.window.prompt('Code:', '');
+					if (typed == null) return; // cancelled
+					if (echo.EchoAdmin.check(typed))
+					{
+						ClientPrefs.data.echoAdmin = true;
+						ClientPrefs.saveSettings();
+						FlxG.sound.play(Paths.sound('confirmMenu'));
+						openSubState(new EchoAdminSubState());
+					}
+					else
+					{
+						FlxG.sound.play(Paths.sound('cancelMenu'));
+						FlxG.camera.shake(0.01, 0.2);
+					}
+					#end
+				}));
+		}
+
 		super();
 	}
 }

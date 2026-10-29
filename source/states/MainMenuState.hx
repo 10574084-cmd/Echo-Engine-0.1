@@ -26,6 +26,7 @@ class MainMenuState extends MusicBeatState
 	];
 
 	var magenta:FlxSprite;
+	var secretSel:Int = 0;
 	var camFollow:FlxObject;
 
 	override function create()
@@ -214,13 +215,27 @@ class MainMenuState extends MusicBeatState
 					}
 				}
 			}
-			#if desktop
-			if (controls.justPressed('debug_1'))
+			if (echo.EchoAdmin.editorsAllowed() && controls.justPressed('debug_1'))
 			{
 				selectedSomethin = true;
 				MusicBeatState.switchState(new MasterEditorMenu());
 			}
-			#end
+
+			switch (echo.EchoAdmin.watchSecret())
+			{
+				case 1:
+					secretSel = curSelected;
+				case 2:
+					changeItem(secretSel - curSelected); // typing the word also moved the menu: put it back
+					FlxG.sound.play(Paths.sound('confirmMenu'));
+					FlxG.camera.flash(FlxColor.WHITE, 0.4);
+					var found = new FlxText(0, 8, FlxG.width, 'Echo Lab: something new appeared...', 20);
+					found.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+					found.scrollFactor.set();
+					add(found);
+					FlxTween.tween(found, {alpha: 0}, 1, {startDelay: 2.5, onComplete: function(_) found.destroy()});
+				default:
+			}
 		}
 
 		super.update(elapsed);

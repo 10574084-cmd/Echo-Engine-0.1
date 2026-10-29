@@ -67,11 +67,11 @@ class ResultSubState extends MusicBeatSubstate
 
 		var rivalDone = Session.rivalFinished || Session.rivalLeft;
 		if (Session.rivalFinished && !Session.rivalQuit)
-			theirs.text = 'RIVAL (${Session.rivalChar})\n\nScore: ${Session.rivalScore}\nMisses: ${Session.rivalMisses}\nAccuracy: ${fmt(Session.rivalAccuracy)}';
+			theirs.text = 'RIVAL (${Session.rivalChar})${Session.rivalBot ? ' [BOT]' : ''}\n\nScore: ${Session.rivalScore}\nMisses: ${Session.rivalMisses}\nAccuracy: ${fmt(Session.rivalAccuracy)}';
 		else if (rivalDone)
-			theirs.text = 'RIVAL (${Session.rivalChar})\n\nLeft the song';
+			theirs.text = 'RIVAL (${Session.rivalChar})${Session.rivalBot ? ' [BOT]' : ''}\n\nLeft the song';
 		else
-			theirs.text = 'RIVAL (${Session.rivalChar})\n\nStill playing...\nScore: ${Session.rivalScore}';
+			theirs.text = 'RIVAL (${Session.rivalChar})${Session.rivalBot ? ' [BOT]' : ''}\n\nStill playing...\nScore: ${Session.rivalScore}';
 
 		if (!rivalDone)
 		{
