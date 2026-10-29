@@ -19,7 +19,7 @@ class FlashingState extends MusicBeatState
 		add(bg);
 
 		warnText = new FlxText(40, 0, FlxG.width - 80,
-			"Welcome to Echo Engine (BETA)!\n\n" +
+			"Welcome to Echo Engine 1.1.0!\n\n" +
 			"This project is for all users.\n" +
 			"It is not official, and it uses Psych Engine to make it work.\n" +
 			"It is a fan project: it is not affiliated with Friday Night Funkin',\n" +

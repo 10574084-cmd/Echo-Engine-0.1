@@ -24,13 +24,19 @@ project). The game\'s own art, music and trademarks belong to their owners.
 Use only mods and content you have permission to use.
 
 CHANGE LOG
+1.1.0
+- Echo Extra settings: optimization presets, touch controls (size, spacing,
+  opacity, layouts and a button editor), accessibility and HUD, themes, quick
+  boot, random menu music, stats and the Echo Lab.
+- Online: the host plays as Boyfriend and the other player picks a character.
+- Fixed the black screen in Blammed (and any chart that uses Set Property).
+- New ONLINE button in the main menu that matches the others.
+
 BETA 0.1
 - Playable in the browser (HTML5), built and published with GitHub Actions.
 - Mods: import .zip files, saved in the browser; PNG, audio and font support.
 - Online mode: 1 vs 1 duels by room code.
 - On-screen controls for phones.
-- Echo Extra settings: optimization presets, touch controls, accessibility,
-  themes, quick boot, random menu music, stats and the Echo Lab.
 
 KNOWN LIMITS
 - Lua and HScript scripts do not run on the web version.
