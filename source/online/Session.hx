@@ -9,7 +9,8 @@ package online;
  *   lobby   - "I am in the song list" (the host only starts when the rival is there too)
  *   songs   - the songs I have, so the host can't start one the guest doesn't own
  *   sel     - the host moved to this song/difficulty (the guest follows it)
- *   start   - the host started this song
+ *   start   - the host started this song (force: true = even if the guest is in another menu)
+ *   evt     - an admin forced a chart event (only FORCEABLE_EVENTS are accepted)
  *   stat    - live score while playing
  *   fin     - final result (quit = left before the end)
  *   bye     - leaving the room
@@ -38,6 +39,13 @@ class Session
 	public static var rivalQuit:Bool = false;
 	/** The rival plays with botplay (admin option): shown next to its score. */
 	public static var rivalBot:Bool = false;
+
+	/** Events an admin can force on everybody. Anything else received is ignored. */
+	public static final FORCEABLE_EVENTS:Array<String> = ['Add Camera Zoom', 'Screen Shake', 'Hey!', 'Change Scroll Speed'];
+
+	/** A song the host forced on this player while it was somewhere else: Freeplay picks it up and starts it. */
+	public static var pendingForce:{song:String, diff:String} = null;
+	public static var onForcedEvent:String->String->String->Void = null;
 
 	// callbacks of whichever screen is open
 	public static var onSelect:String->String->Void = null;
@@ -115,7 +123,12 @@ class Session
 				{
 					resetRun();
 					if (onStart != null) onStart(msg.song, msg.diff);
+					else if (msg.force == true) forceJoin(Std.string(msg.song), Std.string(msg.diff));
 				}
+			case 'evt':
+				var name = Std.string(msg.name);
+				if (FORCEABLE_EVENTS.indexOf(name) >= 0 && onForcedEvent != null)
+					onForcedEvent(name, Std.string(msg.v1).substr(0, 40), Std.string(msg.v2).substr(0, 40));
 			case 'stat':
 				rivalScore = msg.s;
 				rivalMisses = msg.m;
@@ -163,11 +176,24 @@ class Session
 		if (isHost) Net.send({t: 'sel', song: song, diff: difficulty});
 	}
 
-	public static function sendStart(song:String, difficulty:String):Void
+	public static function sendStart(song:String, difficulty:String, force:Bool = false):Void
 	{
 		rivalInLobby = false;
 		resetRun();
-		Net.send({t: 'start', song: song, diff: difficulty});
+		Net.send({t: 'start', song: song, diff: difficulty, force: force});
+	}
+
+	/** Admin: makes the rival's game run this chart event too. */
+	public static function sendEvent(name:String, value1:String, value2:String):Void
+		Net.send({t: 'evt', name: name, v1: value1, v2: value2});
+
+	/** The host forced a song while this player was in another menu: go to the song list, it starts there. */
+	static function forceJoin(song:String, diff:String):Void
+	{
+		var game = states.PlayState.instance;
+		if (game != null && !game.endingSong) return; // already playing
+		pendingForce = {song: song, diff: diff};
+		MusicBeatState.switchState(new states.FreeplayState());
 	}
 
 	// ------------------------------------------------------------------------------------------

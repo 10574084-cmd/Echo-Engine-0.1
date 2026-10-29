@@ -1683,6 +1683,19 @@ class PlayState extends MusicBeatState
 			rivalText.cameras = [camHUD];
 			rivalText.scrollFactor.set();
 			add(rivalText);
+
+			// an admin forced a chart event on everybody (Options > xd in the pause menu)
+			online.Session.onForcedEvent = function(name:String, v1:String, v2:String)
+			{
+				if(endingSong || startingSong) return;
+				triggerEvent(name, v1, v2, Conductor.songPosition);
+				var banner = new FlxText(0, 130, FlxG.width, 'ADMIN FORCED: $name', 26);
+				banner.setFormat(Paths.font('vcr.ttf'), 26, FlxColor.YELLOW, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+				banner.cameras = [camHUD];
+				banner.scrollFactor.set();
+				add(banner);
+				FlxTween.tween(banner, {alpha: 0}, 0.6, {startDelay: 1.6, onComplete: function(_) { remove(banner); banner.destroy(); }});
+			};
 		}
 
 		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy(), onlineBotUsed);
@@ -3142,6 +3155,7 @@ class PlayState extends MusicBeatState
 		echoRecordSong(false);
 		#if html5
 		webfs.TouchBridge.setPlaying(false);
+		online.Session.onForcedEvent = null;
 		// left the song before the end: tell the rival
 		if(online.Session.active && !onlineFinished)
 			online.Session.sendFinal(songScore, songMisses, onlineAccuracy(), true, onlineBotUsed);

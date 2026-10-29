@@ -210,6 +210,10 @@ class FreeplayState extends MusicBeatState
 
 	#if html5
 	var onlineText:FlxText;
+
+	/** F: an admin host forces the song on everybody. */
+	function onlineAdminForce():Bool
+		return online.Session.active && online.Session.isHost && echo.EchoAdmin.isAdmin() && FlxG.keys.justPressed.F && !remoteStartRequested;
 	var onlineMissing:String = null;
 	var remoteStartRequested:Bool = false;
 
@@ -236,6 +240,15 @@ class FreeplayState extends MusicBeatState
 		online.Session.sendLobby([for(i in 0...songs.length) onlineSongName(i)]);
 		onlineRefresh();
 		onlineSendSelection();
+
+		if(online.Session.pendingForce != null)
+		{
+			var forced = online.Session.pendingForce;
+			online.Session.pendingForce = null;
+			onlineRemoteSelect(forced.song, forced.diff);
+			if(onlineMissing == null) remoteStartRequested = true;
+			else onlineRefresh('The host forced "${forced.song}" but you do not have it. Press BACK to leave.');
+		}
 	}
 
 	function onlineRefresh(?message:String):Void
@@ -245,7 +258,7 @@ class FreeplayState extends MusicBeatState
 		{
 			if(online.Session.rivalLeft) message = 'Your rival left the room. Press BACK to leave.';
 			else if(onlineMissing != null) message = 'You do not have the song "$onlineMissing". The host cannot start it.';
-			else if(online.Session.isHost) message = online.Session.rivalInLobby ? 'ONLINE - you are the host (Boyfriend) vs ${online.Session.rivalChar}: pick a song and press ENTER' : 'ONLINE - waiting for your rival to choose a character...';
+			else if(online.Session.isHost) message = online.Session.rivalInLobby ? 'ONLINE - you are the host (Boyfriend) vs ${online.Session.rivalChar}: pick a song and press ENTER' + (echo.EchoAdmin.isAdmin() ? '  (admin: F forces it)' : '') : 'ONLINE - waiting for your rival to choose a character...';
 			else message = 'ONLINE - you play as ${online.Session.myChar}; the host picks the song';
 		}
 		onlineText.text = message;
@@ -297,6 +310,20 @@ class FreeplayState extends MusicBeatState
 		FlxG.sound.playMusic(Paths.music(echo.EchoMusic.menuTrack()), 0);
 	}
 	#end
+
+	/** Admin host: starts the selected song for both players now, wherever the rival is. */
+	function onlineForceStart():Void
+	{
+		var name = onlineSongName(curSelected);
+		if(online.Session.rivalLeft || !online.Session.rivalHasSong(name))
+		{
+			FlxG.sound.play(Paths.sound('cancelMenu'));
+			onlineRefresh(online.Session.rivalLeft ? 'Your rival left the room. Press BACK to leave.' : 'Your rival does not have this song.');
+			return;
+		}
+		online.Session.sendStart(name, Difficulty.getString(curDifficulty), true);
+		remoteStartRequested = true;
+	}
 
 	/** Decides if ENTER (or the host's "start") starts the selected song. */
 	function onlineAccept(pressed:Bool):Bool
@@ -503,6 +530,10 @@ class FreeplayState extends MusicBeatState
 			{
 				player.pauseOrResume(player.paused);
 			}
+		}
+		else if (onlineAdminForce() && !player.playingMusic)
+		{
+			onlineForceStart();
 		}
 		else if (onlineAccept(controls.ACCEPT) && !player.playingMusic)
 		{
