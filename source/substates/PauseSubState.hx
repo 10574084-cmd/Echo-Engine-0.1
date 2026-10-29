@@ -59,6 +59,9 @@ class PauseSubState extends MusicBeatSubstate
 			menuItemsOG.insert(4 + num, 'Toggle Practice Mode');
 			menuItemsOG.insert(5 + num, 'Toggle Botplay');
 		}
+		// hidden admin options (Options > Echo Extra > Echo Extras > Echo Lab > xd)
+		if(echo.EchoAdmin.isAdmin())
+			menuItemsOG.insert(menuItemsOG.indexOf('Exit to menu'), 'xd');
 		menuItems = menuItemsOG;
 
 		for (i in 0...Difficulty.list.length) {
@@ -303,6 +306,10 @@ class PauseSubState extends MusicBeatSubstate
 					PlayState.instance.botplayTxt.visible = PlayState.instance.cpuControlled;
 					PlayState.instance.botplayTxt.alpha = 1;
 					PlayState.instance.botplaySine = 0;
+				case 'xd':
+					var admin = new options.EchoAdminSubState();
+					admin.cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
+					openSubState(admin);
 				case 'Options':
 					PlayState.instance.paused = true; // For lua
 					PlayState.instance.vocals.volume = 0;

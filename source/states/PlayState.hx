@@ -1662,6 +1662,7 @@ class PlayState extends MusicBeatState
 	#if html5
 	var rivalText:FlxText;
 	var onlineFinished:Bool = false;
+	var onlineBotUsed:Bool = false; // once botplay was on during the duel the rival keeps seeing [BOT]
 
 	function onlineAccuracy():Float
 	{
@@ -1673,6 +1674,7 @@ class PlayState extends MusicBeatState
 	function onlineUpdate(elapsed:Float):Void
 	{
 		if(!online.Session.active) return;
+		if(cpuControlled) onlineBotUsed = true;
 
 		if(rivalText == null)
 		{
@@ -1683,7 +1685,7 @@ class PlayState extends MusicBeatState
 			add(rivalText);
 		}
 
-		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy(), cpuControlled);
+		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy(), onlineBotUsed);
 
 		rivalText.text = online.Session.rivalLeft ? 'RIVAL LEFT' :
 			'RIVAL (${online.Session.rivalChar})${online.Session.rivalBot ? ' [BOT]' : ''}\nScore: ${online.Session.rivalScore}\nMisses: ${online.Session.rivalMisses} | ${Math.round(online.Session.rivalAccuracy * 100) / 100}%';
@@ -1693,7 +1695,7 @@ class PlayState extends MusicBeatState
 	{
 		onlineFinished = true;
 		var acc = onlineAccuracy();
-		online.Session.sendFinal(songScore, songMisses, acc, false, cpuControlled);
+		online.Session.sendFinal(songScore, songMisses, acc, false, onlineBotUsed);
 		persistentUpdate = false;
 		persistentDraw = true;
 		openSubState(new online.ResultSubState(songScore, songMisses, acc));
@@ -3142,7 +3144,7 @@ class PlayState extends MusicBeatState
 		webfs.TouchBridge.setPlaying(false);
 		// left the song before the end: tell the rival
 		if(online.Session.active && !onlineFinished)
-			online.Session.sendFinal(songScore, songMisses, onlineAccuracy(), true, cpuControlled);
+			online.Session.sendFinal(songScore, songMisses, onlineAccuracy(), true, onlineBotUsed);
 		#end
 
 		#if LUA_ALLOWED

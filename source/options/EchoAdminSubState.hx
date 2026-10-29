@@ -12,7 +12,7 @@ class EchoAdminSubState extends BaseOptionsMenu
 		title = 'xd (admin)';
 		rpcTitle = 'Echo Admin Menu';
 
-		addOption(EchoOptions.action('Open Editors',
+		if (EchoAdmin.editorsAllowed()) addOption(EchoOptions.action('Open Editors',
 			'Chart editor, character editor, stage and week editors.\nIn a song or in the main menu you can also press 7 (chart) and 8 (character).',
 			function()
 			{
@@ -24,7 +24,19 @@ class EchoAdminSubState extends BaseOptionsMenu
 		addOption(EchoOptions.bool('Botplay',
 			'The game plays your side for you, in every song, also in online duels.\nIn a duel your rival sees "[BOT]" next to your score.',
 			function() return ClientPrefs.data.echoAdminBot,
-			function(v:Bool) ClientPrefs.data.echoAdminBot = v,
+			function(v:Bool)
+			{
+				ClientPrefs.data.echoAdminBot = v;
+				// opened from the pause menu: apply it to the song right now
+				var game = states.PlayState.instance;
+				if (game != null)
+				{
+					game.cpuControlled = v || ClientPrefs.getGameplaySetting('botplay');
+					game.botplayTxt.visible = game.cpuControlled;
+					game.botplayTxt.alpha = 1;
+					game.botplaySine = 0;
+				}
+			},
 			false));
 
 		addOption(EchoOptions.bool('God Mode',
