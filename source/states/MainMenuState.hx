@@ -47,6 +47,12 @@ class MainMenuState extends MusicBeatState
 
 		var yScroll:Float = Math.max(0.25 - (0.05 * (optionShit.length - 4)), 0.1);
 		var bg:FlxSprite = new FlxSprite(-80).loadGraphic(Paths.image('menuBG'));
+		if (echo.EchoTheme.active())
+		{
+			// Echo Extra > Echo Theme: the grey background tinted with the theme's colour
+			bg.loadGraphic(Paths.image('menuDesat'));
+			bg.color = echo.EchoTheme.color(FlxColor.WHITE);
+		}
 		bg.antialiasing = ClientPrefs.data.antialiasing;
 		bg.scrollFactor.set(0, yScroll);
 		bg.setGraphicSize(Std.int(bg.width * 1.175));
@@ -108,6 +114,8 @@ class MainMenuState extends MusicBeatState
 		Achievements.reloadList();
 		#end
 		#end
+
+		echo.EchoMusic.onMainMenu();
 
 		super.create();
 

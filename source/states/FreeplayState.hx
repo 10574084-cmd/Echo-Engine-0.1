@@ -245,8 +245,8 @@ class FreeplayState extends MusicBeatState
 		{
 			if(online.Session.rivalLeft) message = 'Your rival left the room. Press BACK to leave.';
 			else if(onlineMissing != null) message = 'You do not have the song "$onlineMissing". The host cannot start it.';
-			else if(online.Session.isHost) message = online.Session.rivalInLobby ? 'ONLINE - you are the host: pick a song and press ENTER' : 'ONLINE - waiting for your rival to be ready...';
-			else message = 'ONLINE - the host picks the song';
+			else if(online.Session.isHost) message = online.Session.rivalInLobby ? 'ONLINE - you are the host (Boyfriend) vs ${online.Session.rivalChar}: pick a song and press ENTER' : 'ONLINE - waiting for your rival to choose a character...';
+			else message = 'ONLINE - you play as ${online.Session.myChar}; the host picks the song';
 		}
 		onlineText.text = message;
 	}
@@ -294,7 +294,7 @@ class FreeplayState extends MusicBeatState
 		instPlaying = -1;
 		player.playingMusic = false;
 		player.switchPlayMusic();
-		FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
+		FlxG.sound.playMusic(Paths.music(echo.EchoMusic.menuTrack()), 0);
 	}
 	#end
 
@@ -321,7 +321,7 @@ class FreeplayState extends MusicBeatState
 			var name = onlineSongName(curSelected);
 			var problem:String = null;
 			if(online.Session.rivalLeft) problem = 'Your rival left the room. Press BACK to leave.';
-			else if(!online.Session.rivalInLobby) problem = 'Your rival is not ready yet...';
+			else if(!online.Session.rivalInLobby || !online.Session.rivalCharKnown) problem = 'Your rival is not ready yet...';
 			else if(!online.Session.rivalHasSong(name)) problem = 'Your rival does not have this song.';
 			if(problem != null)
 			{
@@ -436,7 +436,7 @@ class FreeplayState extends MusicBeatState
 				player.playingMusic = false;
 				player.switchPlayMusic();
 
-				FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
+				FlxG.sound.playMusic(Paths.music(echo.EchoMusic.menuTrack()), 0);
 				FlxTween.tween(FlxG.sound.music, {volume: 1}, 1);
 			}
 			else 
@@ -723,7 +723,7 @@ class FreeplayState extends MusicBeatState
 
 		FlxG.autoPause = ClientPrefs.data.autoPause;
 		if (!FlxG.sound.music.playing)
-			FlxG.sound.playMusic(Paths.music('freakyMenu'));
+			FlxG.sound.playMusic(Paths.music(echo.EchoMusic.menuTrack()));
 	}	
 }
 

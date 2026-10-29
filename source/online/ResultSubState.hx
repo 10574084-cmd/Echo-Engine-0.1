@@ -63,15 +63,15 @@ class ResultSubState extends MusicBeatSubstate
 
 	function refresh():Void
 	{
-		mine.text = 'YOU\n\nScore: $myScore\nMisses: $myMisses\nAccuracy: ${fmt(myAccuracy)}';
+		mine.text = 'YOU (${Session.myChar})\n\nScore: $myScore\nMisses: $myMisses\nAccuracy: ${fmt(myAccuracy)}';
 
 		var rivalDone = Session.rivalFinished || Session.rivalLeft;
 		if (Session.rivalFinished && !Session.rivalQuit)
-			theirs.text = 'RIVAL\n\nScore: ${Session.rivalScore}\nMisses: ${Session.rivalMisses}\nAccuracy: ${fmt(Session.rivalAccuracy)}';
+			theirs.text = 'RIVAL (${Session.rivalChar})\n\nScore: ${Session.rivalScore}\nMisses: ${Session.rivalMisses}\nAccuracy: ${fmt(Session.rivalAccuracy)}';
 		else if (rivalDone)
-			theirs.text = 'RIVAL\n\nLeft the song';
+			theirs.text = 'RIVAL (${Session.rivalChar})\n\nLeft the song';
 		else
-			theirs.text = 'RIVAL\n\nStill playing...\nScore: ${Session.rivalScore}';
+			theirs.text = 'RIVAL (${Session.rivalChar})\n\nStill playing...\nScore: ${Session.rivalScore}';
 
 		if (!rivalDone)
 		{

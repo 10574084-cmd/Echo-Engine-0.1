@@ -5,6 +5,7 @@ package online;
  * State of an online duel: who is who, what the rival is doing, and the message protocol on top of `Net`.
  *
  * Messages (JSON objects with a field `t`):
+ *   char    - the guest's chosen character (the host is always bf)
  *   lobby   - "I am in the song list" (the host only starts when the rival is there too)
  *   songs   - the songs I have, so the host can't start one the guest doesn't own
  *   sel     - the host moved to this song/difficulty (the guest follows it)
@@ -22,6 +23,12 @@ class Session
 	public static var rivalSongs:Array<String> = null;
 	public static var rivalInLobby:Bool = false;
 	public static var rivalLeft:Bool = false;
+
+	/** Who plays as whom: the host is always Boyfriend, the guest picks a character (OnlineCharacterState). */
+	public static var myChar:String = 'bf';
+	public static var rivalChar:String = 'bf';
+	/** False until the guest's choice reached the host. */
+	public static var rivalCharKnown:Bool = false;
 
 	// what the rival is doing in the current song
 	public static var rivalScore:Int = 0;
@@ -47,6 +54,9 @@ class Session
 		rivalSongs = null;
 		rivalInLobby = false;
 		rivalLeft = false;
+		myChar = 'bf';
+		rivalChar = 'bf';
+		rivalCharKnown = !host; // the guest already knows the host is Boyfriend
 		resetRun();
 		Net.onMessage = handle;
 		Net.onClose = function()
@@ -87,6 +97,10 @@ class Session
 			case 'lobby':
 				rivalInLobby = true;
 				if (onLobbyChanged != null) onLobbyChanged();
+			case 'char':
+				rivalChar = Std.string(msg.name);
+				rivalCharKnown = true;
+				if (onLobbyChanged != null) onLobbyChanged();
 			case 'songs':
 				rivalSongs = msg.list;
 				if (onLobbyChanged != null) onLobbyChanged();
@@ -120,6 +134,13 @@ class Session
 	// ------------------------------------------------------------------------------------------
 	// Song list
 	// ------------------------------------------------------------------------------------------
+
+	/** The guest tells which character it plays as. */
+	public static function sendChar(name:String):Void
+	{
+		myChar = name;
+		Net.send({t: 'char', name: name});
+	}
 
 	public static function sendLobby(ownedSongs:Array<String>):Void
 	{

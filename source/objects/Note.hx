@@ -475,7 +475,7 @@ class Note extends FlxSprite
 			angle = strumDirection - 90 + strumAngle + offsetAngle;
 
 		if(copyAlpha)
-			alpha = strumAlpha * multAlpha;
+			alpha = strumAlpha * multAlpha * ClientPrefs.data.echoNoteAlpha;
 
 		if(copyX)
 			x = strumX + offsetX + Math.cos(angleDir) * distance;

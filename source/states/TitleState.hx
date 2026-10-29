@@ -316,7 +316,19 @@ class TitleState extends MusicBeatState
 		if (initialized)
 			skipIntro();
 		else
+		{
 			initialized = true;
+			if (ClientPrefs.data.echoQuickBoot)
+			{
+				// Echo Extra > Quick Boot: straight to the title screen, no logos and no credits
+				sickBeats = 100;
+				if (FlxG.sound.music == null || !FlxG.sound.music.playing)
+					FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
+				FlxG.sound.music.fadeIn(1, 0, 0.7);
+				playJingle = false;
+				skipIntro();
+			}
+		}
 
 		Paths.clearUnusedMemory();
 		// credGroup.add(credTextShit);

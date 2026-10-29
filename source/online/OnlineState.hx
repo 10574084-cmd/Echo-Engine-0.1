@@ -34,7 +34,7 @@ class OnlineState extends MusicBeatState
 
 		var bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
 		bg.antialiasing = ClientPrefs.data.antialiasing;
-		bg.color = 0xFF3FA9F5;
+		bg.color = echo.EchoTheme.color(0xFF3FA9F5);
 		bg.screenCenter();
 		add(bg);
 
@@ -42,7 +42,7 @@ class OnlineState extends MusicBeatState
 		title.setFormat(Paths.font('vcr.ttf'), 48, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(title);
 
-		var sub = new FlxText(0, 90, FlxG.width, '1 vs 1  -  you and a friend play the same song and see each other\'s score live', 20);
+		var sub = new FlxText(0, 90, FlxG.width, '1 vs 1  -  the host plays as Boyfriend, the other player picks a character', 20);
 		sub.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(sub);
 
@@ -97,7 +97,9 @@ class OnlineState extends MusicBeatState
 	{
 		Session.begin(host);
 		FlxG.sound.play(Paths.sound('confirmMenu'));
-		MusicBeatState.switchState(new FreeplayState());
+		// the host is Boyfriend; the player who joins picks a character first
+		if (host) MusicBeatState.switchState(new FreeplayState());
+		else MusicBeatState.switchState(new OnlineCharacterState());
 	}
 
 	function createRoom():Void

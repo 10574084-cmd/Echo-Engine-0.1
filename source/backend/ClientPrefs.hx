@@ -75,6 +75,19 @@ import states.TitleState;
 	public var safeFrames:Float = 10;
 	public var guitarHeroSustains:Bool = true;
 	public var discordRPC:Bool = true;
+
+	// ---- Echo Engine (options > Echo Extra) ----
+	public var echoPreset:String = 'Balanced'; // Low / Balanced / High / Custom
+	public var echoShowMemory:Bool = true;
+	public var echoAutoClean:Bool = false;
+	public var echoReduceMotion:Bool = false;
+	public var echoHidePopups:Bool = false;
+	public var echoNoteAlpha:Float = 1;
+	public var echoInfoOverlay:Bool = false;
+	public var echoTheme:String = 'Default';
+	public var echoQuickBoot:Bool = false;
+	public var echoRandomMusic:Bool = false;
+	public var echoLabAlwaysClean:Bool = false;
 }
 
 class ClientPrefs {

@@ -213,6 +213,11 @@ class PlayState extends MusicBeatState
 	public var songHits:Int = 0;
 	public var songMisses:Int = 0;
 	public var scoreTxt:FlxText;
+	// Echo Extra
+	var echoInfo:FlxText;
+	var echoInfoTimer:Float = 0;
+	var echoStartStamp:Float = -1;
+	var echoStatsDone:Bool = false;
 	var timeTxt:FlxText;
 	var scoreTxtTween:FlxTween;
 
@@ -267,6 +272,11 @@ class PlayState extends MusicBeatState
 	override public function create()
 	{
 		//trace('Playback Rate: ' + playbackRate);
+		#if html5
+		// developer helper: add ?seek=45 to the address to start songs at second 45 (used to test long songs)
+		var seek:Float = Std.parseFloat(js.Syntax.code("(new URLSearchParams(window.location.search)).get('seek') || ''"));
+		if(!Math.isNaN(seek) && seek > 0) startOnTime = seek * 1000;
+		#end
 		Paths.clearStoredMemory();
 
 		startCallback = startCountdown;
@@ -302,6 +312,9 @@ class PlayState extends MusicBeatState
 			practiceMode = true;
 			cpuControlled = false;
 			chartingMode = false;
+			// the host is Boyfriend, the guest is the character they picked: each one sees itself on the player's side
+			SONG.player1 = online.Session.myChar;
+			SONG.player2 = online.Session.rivalChar;
 		}
 		#end
 		guitarHeroSustains = ClientPrefs.data.guitarHeroSustains;
@@ -567,6 +580,15 @@ class PlayState extends MusicBeatState
 		scoreTxt.visible = !ClientPrefs.data.hideHud;
 		updateScore(false);
 		uiGroup.add(scoreTxt);
+
+		if(ClientPrefs.data.echoInfoOverlay)
+		{
+			echoInfo = new FlxText(10, ClientPrefs.data.downScroll ? FlxG.height - 60 : 60, FlxG.width - 20, "", 16);
+			echoInfo.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			echoInfo.scrollFactor.set();
+			echoInfo.borderSize = 1;
+			uiGroup.add(echoInfo);
+		}
 
 		botplayTxt = new FlxText(400, timeBar.y + 55, FlxG.width - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -1032,7 +1054,7 @@ class PlayState extends MusicBeatState
 					if(ClientPrefs.data.opponentStrums || note.mustPress)
 					{
 						note.copyAlpha = false;
-						note.alpha = note.multAlpha;
+						note.alpha = note.multAlpha * ClientPrefs.data.echoNoteAlpha;
 						if(ClientPrefs.data.middleScroll && !note.mustPress)
 							note.alpha *= 0.35;
 					}
@@ -1228,6 +1250,9 @@ class PlayState extends MusicBeatState
 		FlxG.sound.music.onComplete = finishSong.bind();
 		vocals.play();
 		opponentVocals.play();
+
+		echoStartStamp = haxe.Timer.stamp();
+		if(!cpuControlled && !chartingMode) echo.EchoStats.songStarted();
 
 		if(startOnTime > 0) setSongTime(startOnTime - 500);
 		startOnTime = 0;
@@ -1661,7 +1686,7 @@ class PlayState extends MusicBeatState
 		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy());
 
 		rivalText.text = online.Session.rivalLeft ? 'RIVAL LEFT' :
-			'RIVAL\nScore: ${online.Session.rivalScore}\nMisses: ${online.Session.rivalMisses} | ${Math.round(online.Session.rivalAccuracy * 100) / 100}%';
+			'RIVAL (${online.Session.rivalChar})\nScore: ${online.Session.rivalScore}\nMisses: ${online.Session.rivalMisses} | ${Math.round(online.Session.rivalAccuracy * 100) / 100}%';
 	}
 
 	function onlineFinish():Void
@@ -1681,6 +1706,7 @@ class PlayState extends MusicBeatState
 		onlineUpdate(elapsed);
 		webfs.TouchBridge.setPlaying(!paused && subState == null); // phones: note buttons while playing, d-pad otherwise
 		#end
+		if(echoInfo != null) echoUpdateInfo(elapsed);
 
 		if(!inCutscene && !paused && !freezeCamera) {
 			FlxG.camera.followLerp = 2.4 * cameraSpeed * playbackRate;
@@ -2060,7 +2086,7 @@ class PlayState extends MusicBeatState
 				gfSpeed = Math.round(flValue1);
 
 			case 'Add Camera Zoom':
-				if(ClientPrefs.data.camZooms && FlxG.camera.zoom < 1.35) {
+				if(ClientPrefs.data.camZooms && !ClientPrefs.data.echoReduceMotion && FlxG.camera.zoom < 1.35) {
 					if(flValue1 == null) flValue1 = 0.015;
 					if(flValue2 == null) flValue2 = 0.03;
 
@@ -2139,7 +2165,7 @@ class PlayState extends MusicBeatState
 					if(Math.isNaN(duration)) duration = 0;
 					if(Math.isNaN(intensity)) intensity = 0;
 
-					if(duration > 0 && intensity != 0) {
+					if(duration > 0 && intensity != 0 && !ClientPrefs.data.echoReduceMotion) {
 						targetsArray[i].shake(intensity, duration);
 					}
 				}
@@ -2234,11 +2260,18 @@ class PlayState extends MusicBeatState
 			case 'Set Property':
 				try
 				{
+					// The value is text. Numbers and booleans must be real ones: on the web build a String "1.22" put in
+					// defaultCamZoom turns every later zoom calculation into text/NaN and the whole screen goes black (Blammed).
+					var trueValue:Dynamic = value2.trim();
+					if(trueValue == 'true' || trueValue == 'false') trueValue = (trueValue == 'true');
+					else if(flValue2 != null) trueValue = flValue2;
+					else trueValue = value2;
+
 					var split:Array<String> = value1.split('.');
 					if(split.length > 1) {
-						LuaUtils.setVarInArray(LuaUtils.getPropertyLoop(split), split[split.length-1], value2);
+						LuaUtils.setVarInArray(LuaUtils.getPropertyLoop(split), split[split.length-1], trueValue);
 					} else {
-						LuaUtils.setVarInArray(this, value1, value2);
+						LuaUtils.setVarInArray(this, value1, trueValue);
 					}
 				}
 				catch(e:Dynamic)
@@ -2361,6 +2394,8 @@ class PlayState extends MusicBeatState
 			}
 		}
 
+		echoRecordSong(true);
+
 		timeBar.visible = false;
 		timeTxt.visible = false;
 		canPause = false;
@@ -2413,7 +2448,7 @@ class PlayState extends MusicBeatState
 				if (storyPlaylist.length <= 0)
 				{
 					Mods.loadTopMod();
-					FlxG.sound.playMusic(Paths.music('freakyMenu'));
+					FlxG.sound.playMusic(Paths.music(echo.EchoMusic.menuTrack()));
 					#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
 
 					MusicBeatState.switchState(new StoryMenuState());
@@ -2452,7 +2487,7 @@ class PlayState extends MusicBeatState
 				#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
 
 				MusicBeatState.switchState(new FreeplayState());
-				FlxG.sound.playMusic(Paths.music('freakyMenu'));
+				FlxG.sound.playMusic(Paths.music(echo.EchoMusic.menuTrack()));
 				changedDifficulty = false;
 			}
 			transitioning = true;
@@ -2557,7 +2592,7 @@ class PlayState extends MusicBeatState
 		rating.acceleration.y = 550 * playbackRate * playbackRate;
 		rating.velocity.y -= FlxG.random.int(140, 175) * playbackRate;
 		rating.velocity.x -= FlxG.random.int(0, 10) * playbackRate;
-		rating.visible = (!ClientPrefs.data.hideHud && showRating);
+		rating.visible = (!ClientPrefs.data.hideHud && !ClientPrefs.data.echoHidePopups && showRating);
 		rating.x += ClientPrefs.data.comboOffset[0];
 		rating.y -= ClientPrefs.data.comboOffset[1];
 		rating.antialiasing = antialias;
@@ -2567,7 +2602,7 @@ class PlayState extends MusicBeatState
 		comboSpr.x = placement;
 		comboSpr.acceleration.y = FlxG.random.int(200, 300) * playbackRate * playbackRate;
 		comboSpr.velocity.y -= FlxG.random.int(140, 160) * playbackRate;
-		comboSpr.visible = (!ClientPrefs.data.hideHud && showCombo);
+		comboSpr.visible = (!ClientPrefs.data.hideHud && !ClientPrefs.data.echoHidePopups && showCombo);
 		comboSpr.x += ClientPrefs.data.comboOffset[0];
 		comboSpr.y -= ClientPrefs.data.comboOffset[1];
 		comboSpr.antialiasing = antialias;
@@ -2617,7 +2652,7 @@ class PlayState extends MusicBeatState
 			numScore.acceleration.y = FlxG.random.int(200, 300) * playbackRate * playbackRate;
 			numScore.velocity.y -= FlxG.random.int(140, 160) * playbackRate;
 			numScore.velocity.x = FlxG.random.float(-5, 5) * playbackRate;
-			numScore.visible = !ClientPrefs.data.hideHud;
+			numScore.visible = !ClientPrefs.data.hideHud && !ClientPrefs.data.echoHidePopups;
 			numScore.antialiasing = antialias;
 
 			//if (combo >= 10 || combo == 0)
@@ -3080,7 +3115,27 @@ class PlayState extends MusicBeatState
 		grpNoteSplashes.add(splash);
 	}
 
+	/** Adds the song to Echo Extra's stats (once per play). */
+	function echoRecordSong(completed:Bool):Void
+	{
+		if(echoStatsDone || echoStartStamp < 0 || cpuControlled || chartingMode) return;
+		echoStatsDone = true;
+		var seconds = haxe.Timer.stamp() - echoStartStamp;
+		echo.EchoStats.songEnded(SONG.song, completed, songScore, songHits, songMisses, Math.isNaN(ratingPercent) ? 0 : ratingPercent, seconds);
+	}
+
+	function echoUpdateInfo(elapsed:Float):Void
+	{
+		echoInfoTimer += elapsed;
+		if(echoInfoTimer < 0.25) return;
+		echoInfoTimer = 0;
+		var acc = Math.isNaN(ratingPercent) ? 0 : ratingPercent * 100;
+		echoInfo.text = 'Acc ${CoolUtil.floorDecimal(acc, 2)}%  Combo $combo  Sick ${ratingsData[0].hits} Good ${ratingsData[1].hits} Bad ${ratingsData[2].hits} Shit ${ratingsData[3].hits}'
+			+ '\nFPS ${Main.fpsVar != null ? Main.fpsVar.currentFPS : 0}  Mem ${flixel.util.FlxStringUtil.formatBytes(openfl.system.System.totalMemory)}';
+	}
+
 	override function destroy() {
+		echoRecordSong(false);
 		#if html5
 		webfs.TouchBridge.setPlaying(false);
 		// left the song before the end: tell the rival
@@ -3197,7 +3252,7 @@ class PlayState extends MusicBeatState
 			if (generatedMusic && !endingSong && !isCameraOnForcedPos)
 				moveCameraSection();
 
-			if (camZooming && FlxG.camera.zoom < 1.35 && ClientPrefs.data.camZooms)
+			if (camZooming && FlxG.camera.zoom < 1.35 && ClientPrefs.data.camZooms && !ClientPrefs.data.echoReduceMotion)
 			{
 				FlxG.camera.zoom += 0.015 * camZoomingMult;
 				camHUD.zoom += 0.03 * camZoomingMult;

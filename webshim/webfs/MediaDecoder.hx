@@ -142,6 +142,13 @@ class MediaDecoder
 		return howl.state() == "loaded";
 	}
 
+	/** Forgets every cached sound (they are decoded again from the stored files when needed). */
+	public static function releaseAll():Void
+	{
+		sounds.clear();
+		recent = [];
+	}
+
 	/** Forgets a sound (call it when the file it was made from has been deleted). */
 	public static function releaseSound(path:String):Void
 	{

@@ -41,8 +41,11 @@ En el menú principal entra en **ONLINE**: duelo **1 contra 1** por código de s
 
 1. Uno elige **Create room** y comparte el código de 5 letras que aparece.
 2. El otro elige **Join room** y escribe el código.
-3. Los dos pasan a la lista de canciones: **el anfitrión elige la canción** (el invitado ve la misma selección) y pulsa ENTER.
-4. Los dos juegan la misma canción a la vez; cada uno ve el **marcador del rival en vivo** y al final una pantalla de resultado (gana quien tiene más puntos; si empatan, más precisión).
+3. **El anfitrión siempre es Boyfriend.** El que entra elige **su personaje** en una pantalla de selección (con vista previa; salen los personajes del juego y los de los mods importados).
+4. Los dos pasan a la lista de canciones: **el anfitrión elige la canción** (el invitado ve la misma selección) y pulsa ENTER.
+5. Los dos juegan la misma canción a la vez. Cada uno se ve a sí mismo en el lado del jugador y al rival en el lado del oponente (en lugar del oponente de la canción), con el **marcador del rival en vivo**; al final hay una pantalla de resultado (gana quien tiene más puntos; si empatan, más precisión).
+
+El personaje del rival es solo visual: canta las notas del oponente de la canción, no las teclas reales del otro jugador.
 
 Reglas: sin botplay, sin modificadores y sin morir (solo cuenta la puntuación); no se puede reiniciar la canción. Ambos jugadores deben tener la canción (los mods se importan en cada navegador); si el rival no la tiene, el anfitrión no puede empezarla.
 
@@ -56,12 +59,21 @@ Cómo funciona: el sitio es estático (GitHub Pages), así que no hay servidor d
 * Al abrir la página se descargan unos **75 MB** (todos los assets compartidos, igual que hace el motor original). Las canciones y los assets de cada semana se descargan **solo cuando se juegan** (unos pocos MB por canción).
 * No se puede abrir una "carpeta de mods": se usa el importador de `.zip`.
 
+## Echo Extra (Options > Echo Extra)
+
+* **Optimization:** preajustes *Low / Balanced / High* (Low quita shaders, detalles de fondo/partículas, antialiasing y flashes; High sube el límite de FPS), contador de FPS y medidor de memoria, limpieza de caché (manual y automática cuando la memoria pasa de ~700 MB; las imágenes se liberan al abrir la siguiente pantalla porque la actual las está usando).
+* **Touch Controls** (solo web): activar/desactivar, tamaño, separación y opacidad de los botones, diseño *Classic / Compact / Custom*, editor para arrastrar los botones, vibración (si el dispositivo la admite), modo horizontal y bloqueo de gestos accidentales. Se guardan en el navegador.
+* **Accessibility and HUD:** menos flashes, sin zoom/sacudidas de cámara, ocultar HUD y popups de rating, opacidad de notas y de la barra de vida, teclas, línea de precisión/rendimiento durante la canción. Toda la configuración se guarda sola y se recuerda.
+* **Echo Extras:** Echo Theme (colores de los menús), Quick Boot, Random Menu Music, Stats, Echo Lab (opciones experimentales) y About Echo Engine.
+
 ## Qué se cambió respecto a Psych Engine 0.7.3
 
 * `Project.xml`: target HTML5, `MODS_ALLOWED` activo en web, un *asset library* por semana, canciones bajo demanda, Discord solo en escritorio.
 * `webshim/`: sistema de archivos virtual (memoria + IndexedDB) que sustituye a `sys.FileSystem` / `sys.io.File` en web, importador de `.zip`, decodificador de PNG propio, carga de fuentes y audio para los mods, y un panel de errores, y un parche de `flxanimate` para compilar en HTML5.
 * `source/states/LoadingState.hx`: pantalla de carga que descarga la semana y la canción antes de jugarla.
 * `source/states/ModsMenuState.hx`: botones **ADD** y **DELETE**.
+* `source/echo/`, `source/options/Echo*` y `source/online/`: las funciones propias de Echo Engine (ajustes extra, modo online).
+* `PlayState`: el evento *Set Property* ahora convierte los valores a número/booleano (en JavaScript un texto en `defaultCamZoom` dejaba la pantalla negra, p. ej. en Blammed).
 * Pequeños ajustes en `Paths`, `Mods`, `CoolUtil`, `WeekData` y `Main` (diferencias entre C++ y JavaScript, lectura de mods, arranque).
 
 ## Compilar en local

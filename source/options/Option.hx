@@ -27,6 +27,7 @@ class Option
 	public var decimals:Int = 1; //Only used in float/percent type
 
 	public var displayFormat:String = '%v'; //How String/Float/Percent/Int values are shown, %v = Current value, %d = Default value
+	public var isButton:Bool = false; //Echo Extra: a bool that only runs onChange (no checkbox)
 	public var description:String = '';
 	public var name:String = 'Unknown';
 
