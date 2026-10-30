@@ -119,7 +119,7 @@ class EchoLive
 		var kind = text(o.kind, 8);
 		if (id == null || kind == null) return null;
 
-		var a:Announcement = {id: id, kind: kind, start: 0, song: '', diff: 'Normal', event: '', v1: '', v2: '', msg: ''};
+		var a:Announcement = {id: id, kind: kind, start: 0, seen: 0, song: '', diff: 'Normal', event: '', v1: '', v2: '', msg: ''};
 		var msg = text(o.msg, 140, true);
 		if (msg == null) return null;
 		a.msg = msg;
@@ -172,6 +172,7 @@ class EchoLive
 			return;
 		}
 		if (Date.now().getTime() > a.start + SONG_GRACE) return; // old news
+		a.seen = Date.now().getTime();
 		active = a;
 	}
 
@@ -232,13 +233,18 @@ class EchoLive
 		switch (a.kind)
 		{
 			case 'message':
-				if (now - a.start > 12000) finish();
+				// 15 seconds counted from when this player first sees it (it may arrive a minute after it was sent)
+				if (now - a.seen > 15000) finish();
 				else display('ECHO LIVE: ' + a.msg, inSong);
 
 			case 'event':
-				// an event only makes sense inside a song: whoever is not in one just misses it
-				if (inSong) game.forceEvent(a.event, a.v1, a.v2, 'ECHO LIVE: ' + a.event);
-				finish();
+				// an event only makes sense inside a song: it waits (up to 3 minutes) for the player to be in one
+				if (inSong)
+				{
+					game.forceEvent(a.event, a.v1, a.v2, 'ECHO LIVE: ' + a.event);
+					finish();
+				}
+				else if (now - a.start > 180000) finish();
 
 			case 'song':
 				if (now - a.start > SONG_GRACE || online.Session.active)
@@ -346,6 +352,7 @@ typedef Announcement =
 	var id:String;
 	var kind:String;
 	var start:Float;
+	var seen:Float; // when this player first saw it
 	var song:String;
 	var diff:String;
 	var event:String;
