@@ -14,7 +14,7 @@ class EchoAdminSubState extends BaseOptionsMenu
 	// what the admin chose last: it stays between openings of the quick menus
 	static var liveSong:String = '';
 	static var liveDiff:String = 'Normal';
-	static var liveMinutes:String = '5';
+	static var liveMinutes:String = '5m'; // countdown: seconds (30s) or minutes (5m)
 	static var liveEvent:String = 'Add Camera Zoom';
 	static var liveMessage:String = '';
 	#end
@@ -105,12 +105,12 @@ class EchoAdminSubState extends BaseOptionsMenu
 		// Echo Live: announce something to every player (see echo.EchoLive); needs the GitHub token of the owner
 		var liveKinds = ['song', 'event', 'message', 'clear'];
 		var liveDiffs = ['Easy', 'Normal', 'Hard'];
-		var liveMinuteList = ['0', '1', '2', '5', '10', '15', '30', '60'];
+		var liveMinuteList = ['0s', '10s', '20s', '30s', '45s', '1m', '2m', '5m', '10m', '15m', '30m', '60m'];
 		var liveEvents = ['Add Camera Zoom', 'Screen Shake', 'Hey!', 'Change Scroll Speed'];
 		var kind = switch (section) { case 'events': 'event'; case 'song': 'song'; case 'message': 'message'; default: 'song'; };
-		if (section == 'events' && liveMinutes == '5') liveMinutes = '0'; // quick menus: now, not in 5 minutes
-		if (section == 'song' && liveMinutes == '5') liveMinutes = '1';
-		if (section == 'message') liveMinutes = '0';
+		if (section == 'events' && liveMinutes == '5m') liveMinutes = '0s'; // quick menus: now, not in 5 minutes
+		if (section == 'song' && liveMinutes == '5m') liveMinutes = '1m';
+		if (section == 'message') liveMinutes = '0s';
 
 		if (all) addOption(EchoOptions.string('Live: What',
 			'song = everybody goes to a song, event = a chart event for those playing,\nmessage = only a notice, clear = cancels the last announcement.',
@@ -123,7 +123,7 @@ class EchoAdminSubState extends BaseOptionsMenu
 				if (typed != null) { liveSong = typed.trim(); liveNote('Song: ' + (liveSong == '' ? '(none)' : liveSong)); }
 			}));
 		if (all || section == 'song') addOption(EchoOptions.string('Live: Difficulty', 'Difficulty of that song.', liveDiffs, function() return liveDiff, function(v:String) liveDiff = v, 'Normal'));
-		if (all || section != 'message') addOption(EchoOptions.string('Live: Minutes', 'Minutes of countdown before it happens (0 = as soon as players see it).', liveMinuteList, function() return liveMinutes, function(v:String) liveMinutes = v, liveMinutes));
+		if (all || section != 'message') addOption(EchoOptions.string('Live: Countdown', 'Countdown before it happens, in seconds (s) or minutes (m). 0s = as soon as players see it.\nGitHub needs ~30 s to publish, so very short times arrive already finished.', liveMinuteList, function() return liveMinutes, function(v:String) liveMinutes = v, liveMinutes));
 		if (all || section == 'events') addOption(EchoOptions.string('Live: Event', 'Chart event for everybody who is playing a song.', liveEvents, function() return liveEvent, function(v:String) liveEvent = v, 'Add Camera Zoom'));
 		addOption(EchoOptions.action('Live: Message',
 			'Text shown to everybody in the banner (max 140 characters).' + (liveMessage == '' ? '' : '\nNow: ' + liveMessage),
@@ -155,7 +155,8 @@ class EchoAdminSubState extends BaseOptionsMenu
 			'Starts the announcement now. Every player sees the countdown.',
 			function()
 			{
-				var inputs:Dynamic = {kind: kind, minutes: liveMinutes, message: liveMessage};
+				var seconds = (StringTools.endsWith(liveMinutes, 'm') ? 60 : 1) * Std.parseInt(liveMinutes.substr(0, liveMinutes.length - 1));
+				var inputs:Dynamic = {kind: kind, seconds: Std.string(seconds), message: liveMessage};
 				var summary = kind;
 				switch (kind)
 				{
@@ -163,10 +164,10 @@ class EchoAdminSubState extends BaseOptionsMenu
 						if (liveSong == '') { liveNote('Choose the song first (Live: Song).'); return; }
 						inputs.song = liveSong;
 						inputs.difficulty = liveDiff;
-						summary = 'EVERYBODY GOES TO "$liveSong" ($liveDiff) in $liveMinutes min';
+						summary = 'EVERYBODY GOES TO "$liveSong" ($liveDiff) in $liveMinutes';
 					case 'event':
 						inputs.event = liveEvent;
-						summary = 'EVENT "$liveEvent" for everybody in $liveMinutes min';
+						summary = 'EVENT "$liveEvent" for everybody in $liveMinutes';
 					case 'message':
 						if (liveMessage == '') { liveNote('Write the message first (Live: Message).'); return; }
 						summary = 'MESSAGE "$liveMessage"';

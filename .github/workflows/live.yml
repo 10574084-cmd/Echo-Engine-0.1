@@ -25,7 +25,11 @@ on:
       minutes:
         description: 'Minutes until it happens (0 to 60). A countdown is shown to everybody meanwhile.'
         required: false
-        default: '5'
+        default: '0'
+      seconds:
+        description: 'Extra seconds on top of the minutes (0 to 3600)'
+        required: false
+        default: '0'
       event:
         description: 'event: which chart event'
         type: choice
@@ -62,6 +66,7 @@ jobs:
           SONG: ${{ inputs.song }}
           DIFF: ${{ inputs.difficulty }}
           MINUTES: ${{ inputs.minutes }}
+          SECONDS_: ${{ inputs.seconds }}
           EVENT: ${{ inputs.event }}
           V1: ${{ inputs.value1 }}
           V2: ${{ inputs.value2 }}
@@ -76,10 +81,11 @@ jobs:
           out = {'id': e['RUN'], 'kind': kind, 'msg': msg}
           if kind != 'clear':
               try:
-                  minutes = max(0.0, min(60.0, float(e['MINUTES'] or 0)))
+                  total = float(e['MINUTES'] or 0) * 60 + float(e['SECONDS_'] or 0)
               except ValueError:
-                  sys.exit('minutes must be a number')
-              out['start'] = int(time.time() * 1000 + minutes * 60000)
+                  sys.exit('minutes and seconds must be numbers')
+              total = max(0.0, min(3600.0, total))
+              out['start'] = int(time.time() * 1000 + total * 1000)
           if kind == 'song':
               song = e['SONG'].strip()
               if not re.fullmatch(r'[A-Za-z0-9 _.\-]{1,60}', song):
