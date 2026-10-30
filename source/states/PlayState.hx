@@ -1664,6 +1664,19 @@ class PlayState extends MusicBeatState
 	var onlineFinished:Bool = false;
 	var onlineBotUsed:Bool = false; // once botplay was on during the duel the rival keeps seeing [BOT]
 
+	/** Runs a chart event right now (forced by an admin in a duel, or by an Echo Live announcement) and tells the player. */
+	public function forceEvent(name:String, v1:String, v2:String, label:String):Void
+	{
+		if(endingSong || startingSong) return;
+		triggerEvent(name, v1, v2, Conductor.songPosition);
+		var banner = new FlxText(0, 130, FlxG.width, label, 26);
+		banner.setFormat(Paths.font('vcr.ttf'), 26, FlxColor.YELLOW, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		banner.cameras = [camHUD];
+		banner.scrollFactor.set();
+		add(banner);
+		FlxTween.tween(banner, {alpha: 0}, 0.6, {startDelay: 1.6, onComplete: function(_) { remove(banner); banner.destroy(); }});
+	}
+
 	function onlineAccuracy():Float
 	{
 		var acc:Float = ratingPercent;
@@ -1685,17 +1698,7 @@ class PlayState extends MusicBeatState
 			add(rivalText);
 
 			// an admin forced a chart event on everybody (Options > xd in the pause menu)
-			online.Session.onForcedEvent = function(name:String, v1:String, v2:String)
-			{
-				if(endingSong || startingSong) return;
-				triggerEvent(name, v1, v2, Conductor.songPosition);
-				var banner = new FlxText(0, 130, FlxG.width, 'ADMIN FORCED: $name', 26);
-				banner.setFormat(Paths.font('vcr.ttf'), 26, FlxColor.YELLOW, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-				banner.cameras = [camHUD];
-				banner.scrollFactor.set();
-				add(banner);
-				FlxTween.tween(banner, {alpha: 0}, 0.6, {startDelay: 1.6, onComplete: function(_) { remove(banner); banner.destroy(); }});
-			};
+			online.Session.onForcedEvent = function(name:String, v1:String, v2:String) forceEvent(name, v1, v2, 'ADMIN FORCED: $name');
 		}
 
 		if(!endingSong) online.Session.tick(elapsed, songScore, songMisses, onlineAccuracy(), onlineBotUsed);

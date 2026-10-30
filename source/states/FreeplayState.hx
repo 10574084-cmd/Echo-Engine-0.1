@@ -175,6 +175,7 @@ class FreeplayState extends MusicBeatState
 		updateTexts();
 		#if html5
 		onlineSetup();
+		liveSetup();
 		#end
 		super.create();
 	}
@@ -210,6 +211,50 @@ class FreeplayState extends MusicBeatState
 
 	#if html5
 	var onlineText:FlxText;
+
+	/** An Echo Live announcement sends everybody to this song: Freeplay selects it and starts it. */
+	public static var liveForce:{song:String, diff:String} = null;
+	var liveStartRequested:Bool = false;
+
+	function liveSetup():Void
+	{
+		if(liveForce == null) return;
+		var forced = liveForce;
+		liveForce = null;
+
+		var found = -1;
+		for(i in 0...songs.length)
+			if(Paths.formatToSongPath(songs[i].songName) == forced.song) { found = i; break; }
+
+		if(found < 0)
+		{
+			missingText.text = 'ECHO LIVE: you do not have the song "${forced.song}", so you cannot join this one.';
+			missingText.screenCenter(Y);
+			missingText.visible = true;
+			missingTextBG.visible = true;
+			FlxG.sound.play(Paths.sound('cancelMenu'));
+			return;
+		}
+
+		curSelected = found;
+		changeSelection(0, false);
+		for(i in 0...Difficulty.list.length)
+			if(Difficulty.getString(i).toLowerCase() == forced.diff.toLowerCase())
+			{
+				curDifficulty = i;
+				changeDiff();
+				break;
+			}
+		liveStartRequested = true;
+	}
+
+	function liveConsume():Bool
+	{
+		if(!liveStartRequested) return false;
+		liveStartRequested = false;
+		if(player.playingMusic) onlineStopPreview();
+		return true;
+	}
 
 	/** F: an admin host forces the song on everybody. */
 	function onlineAdminForce():Bool
@@ -535,7 +580,7 @@ class FreeplayState extends MusicBeatState
 		{
 			onlineForceStart();
 		}
-		else if (onlineAccept(controls.ACCEPT) && !player.playingMusic)
+		else if (liveConsume() || (onlineAccept(controls.ACCEPT) && !player.playingMusic))
 		{
 			persistentUpdate = false;
 			var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);

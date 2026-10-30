@@ -29,9 +29,18 @@ class Net
 	/** Called when the link drops (or the other player leaves) after having been open. */
 	public static var onClose:Void->Void = null;
 
+	/** SHA-384 of peerjs@1.5.4/dist/peerjs.min.js: the browser refuses the script if the CDN (or anything in between) changed it. */
+	static inline var PEERJS_INTEGRITY = 'sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb';
+
+	/**
+	 * `window.ECHO_ONLINE` is only honoured when the game runs from this very computer (development). On the public site a
+	 * userscript or an extension could otherwise point the game to another script or signalling server.
+	 */
 	static function config():Dynamic
 	{
-		var c:Dynamic = untyped Browser.window.ECHO_ONLINE;
+		var host = Browser.location.hostname;
+		var local = host == 'localhost' || host == '127.0.0.1' || host == '[::1]';
+		var c:Dynamic = local ? untyped Browser.window.ECHO_ONLINE : null;
 		return c != null ? c : {};
 	}
 
@@ -62,6 +71,12 @@ class Net
 			}
 			var script = Browser.document.createScriptElement();
 			script.src = urls[index++];
+			if (config().scripts == null)
+			{
+				// the default (pinned) library is verified; a development override is not
+				script.setAttribute('integrity', PEERJS_INTEGRITY);
+				script.setAttribute('crossorigin', 'anonymous');
+			}
 			script.onload = function(_)
 			{
 				if (untyped Browser.window.Peer != null) done(null);

@@ -1,0 +1,109 @@
+name: Echo Live (announce something to every player)
+
+# Run it from  Actions > Echo Live > Run workflow.
+# It writes live.json on the `live` branch; every copy of the game reads that file (see source/echo/EchoLive.hx).
+# Only people who can run workflows of this repository can announce anything: that is the security of the feature.
+# It does not touch `main`, so it does not rebuild the site.
+
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: 'What to announce'
+        type: choice
+        required: true
+        default: song
+        options: [song, event, message, clear]
+      song:
+        description: 'song: folder name of the song (e.g. bopeebo, blammed, stress)'
+        required: false
+        default: ''
+      difficulty:
+        description: 'song: difficulty (Easy / Normal / Hard ...)'
+        required: false
+        default: 'Normal'
+      minutes:
+        description: 'Minutes until it happens (0 to 60). A countdown is shown to everybody meanwhile.'
+        required: false
+        default: '5'
+      event:
+        description: 'event: which chart event'
+        type: choice
+        required: false
+        default: Add Camera Zoom
+        options: [Add Camera Zoom, Screen Shake, Hey!, Change Scroll Speed]
+      value1:
+        description: 'event: value 1 (e.g. 0.1 / "0.5, 0.03" / Both / 1.5)'
+        required: false
+        default: ''
+      value2:
+        description: 'event: value 2 (e.g. 0.2 / "0.5, 0.02" / 0.6 / 1)'
+        required: false
+        default: ''
+      message:
+        description: 'Text shown to everybody in the banner (max 140 characters)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: echo-live
+  cancel-in-progress: false
+
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write live.json
+        env:
+          KIND: ${{ inputs.kind }}
+          SONG: ${{ inputs.song }}
+          DIFF: ${{ inputs.difficulty }}
+          MINUTES: ${{ inputs.minutes }}
+          EVENT: ${{ inputs.event }}
+          V1: ${{ inputs.value1 }}
+          V2: ${{ inputs.value2 }}
+          MESSAGE: ${{ inputs.message }}
+          RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys, time
+          e = os.environ
+          kind = e['KIND']
+          msg = e['MESSAGE'].strip()[:140]
+          out = {'id': e['RUN'], 'kind': kind, 'msg': msg}
+          if kind != 'clear':
+              try:
+                  minutes = max(0.0, min(60.0, float(e['MINUTES'] or 0)))
+              except ValueError:
+                  sys.exit('minutes must be a number')
+              out['start'] = int(time.time() * 1000 + minutes * 60000)
+          if kind == 'song':
+              song = e['SONG'].strip()
+              if not re.fullmatch(r'[A-Za-z0-9 _.\-]{1,60}', song):
+                  sys.exit('song: use the folder name of the song, e.g. bopeebo')
+              out['song'] = song
+              out['diff'] = (e['DIFF'].strip() or 'Normal')[:20]
+          elif kind == 'event':
+              out['event'] = e['EVENT']
+              out['v1'] = e['V1'][:40]
+              out['v2'] = e['V2'][:40]
+          elif kind == 'message':
+              if not msg:
+                  sys.exit('message: write the text to show')
+          json.dump(out, open('live.json', 'w'), indent=2)
+          print(json.dumps(out, indent=2))
+          PY
+
+      - name: Publish on the live branch
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q -b live
+          git config user.name "echo-live"
+          git config user.email "echo-live@users.noreply.github.com"
+          git add live.json
+          git commit -q -m "Echo Live announcement"
+          git push -q --force "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" live
