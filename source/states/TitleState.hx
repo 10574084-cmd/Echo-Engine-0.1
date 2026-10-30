@@ -8,6 +8,7 @@ import flixel.addons.transition.FlxTransitionableState;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.graphics.frames.FlxFrame;
 import flixel.group.FlxGroup;
+import flixel.FlxCamera;
 import flixel.input.gamepad.FlxGamepad;
 import haxe.Json;
 
@@ -176,6 +177,56 @@ class TitleState extends MusicBeatState
 
 	var logoBl:FlxSprite;
 	var gfDance:FlxSprite;
+
+	// Echo title animation: the logo drops from the top to the middle of the screen while Girlfriend gets blurred.
+	// Three cameras: the normal one (background, intro texts), one for Girlfriend (it has the blur) and one above for the logo.
+	var camGF:FlxCamera;
+	var camTop:FlxCamera;
+	var gfBlur:openfl.filters.BlurFilter;
+	var logoDropStarted:Bool = false;
+
+	/** The white flashes of the title screen cover all the cameras, not only the one behind the logo. */
+	function flashAll(color:FlxColor, duration:Float = 1)
+	{
+		FlxG.camera.flash(color, duration);
+		if(camGF != null) camGF.flash(color, duration);
+		if(camTop != null) camTop.flash(color, duration);
+	}
+
+	function prepareLogoDrop():Void
+	{
+		if(!ClientPrefs.data.echoTitleAnim) return;
+		camGF = new FlxCamera();
+		camGF.bgColor = FlxColor.TRANSPARENT;
+		camTop = new FlxCamera();
+		camTop.bgColor = FlxColor.TRANSPARENT;
+		FlxG.cameras.add(camGF, false);
+		FlxG.cameras.add(camTop, false);
+		gfDance.cameras = [camGF];
+		logoBl.cameras = [camTop];
+		titleText.cameras = [camTop];
+		// hidden until the intro is over (the black intro screen lives on the normal camera, below these two)
+		gfDance.visible = logoBl.visible = titleText.visible = false;
+		gfBlur = new openfl.filters.BlurFilter(0, 0, 2);
+	}
+
+	function startLogoDrop():Void
+	{
+		logoDropStarted = true;
+		if(camTop == null) return;
+
+		gfDance.visible = logoBl.visible = titleText.visible = true;
+		var endX = (FlxG.width - logoBl.width) / 2;
+		var endY = (FlxG.height - logoBl.height) / 2 - 30;
+		logoBl.x = endX;
+		logoBl.y = -logoBl.height - 40; // above the screen
+		FlxTween.tween(logoBl, {y: endY}, 1.6, {ease: FlxEase.bounceOut, startDelay: 0.25});
+		FlxTween.num(0, 9, 1.4, {ease: FlxEase.quadOut, startDelay: 0.25}, function(v:Float)
+		{
+			gfBlur.blurX = gfBlur.blurY = v;
+			camGF.setFilters([gfBlur]);
+		});
+	}
 	var danceLeft:Bool = false;
 	var titleText:FlxSprite;
 	var swagShader:ColorSwap = null;
@@ -282,6 +333,7 @@ class TitleState extends MusicBeatState
 		titleText.updateHitbox();
 		// titleText.screenCenter(X);
 		add(titleText);
+		prepareLogoDrop();
 
 		var logo:FlxSprite = new FlxSprite().loadGraphic(Paths.image('logo'));
 		logo.antialiasing = ClientPrefs.data.antialiasing;
@@ -360,6 +412,8 @@ class TitleState extends MusicBeatState
 
 	override function update(elapsed:Float)
 	{
+		if(skippedIntro && !logoDropStarted) startLogoDrop();
+
 		if (FlxG.sound.music != null)
 			Conductor.songPosition = FlxG.sound.music.time;
 		// FlxG.watch.addQuick('amp', FlxG.sound.music.amplitude);
@@ -417,7 +471,7 @@ class TitleState extends MusicBeatState
 				
 				if(titleText != null) titleText.animation.play('press');
 
-				FlxG.camera.flash(ClientPrefs.data.flashing ? FlxColor.WHITE : 0x4CFFFFFF, 1);
+				flashAll(ClientPrefs.data.flashing ? FlxColor.WHITE : 0x4CFFFFFF, 1);
 				FlxG.sound.play(Paths.sound('confirmMenu'), 0.7);
 
 				transitioning = true;
@@ -630,7 +684,7 @@ class TitleState extends MusicBeatState
 					default: //Go back to normal ugly ass boring GF
 						remove(ngSpr);
 						remove(credGroup);
-						FlxG.camera.flash(FlxColor.WHITE, 2);
+						flashAll(FlxColor.WHITE, 2);
 						skippedIntro = true;
 						playJingle = false;
 
@@ -646,7 +700,7 @@ class TitleState extends MusicBeatState
 					{
 						remove(ngSpr);
 						remove(credGroup);
-						FlxG.camera.flash(FlxColor.WHITE, 0.6);
+						flashAll(FlxColor.WHITE, 0.6);
 						transitioning = false;
 					});
 				}
@@ -654,7 +708,7 @@ class TitleState extends MusicBeatState
 				{
 					remove(ngSpr);
 					remove(credGroup);
-					FlxG.camera.flash(FlxColor.WHITE, 3);
+					flashAll(FlxColor.WHITE, 3);
 					sound.onComplete = function() {
 						FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
 						FlxG.sound.music.fadeIn(4, 0, 0.7);
@@ -667,7 +721,7 @@ class TitleState extends MusicBeatState
 			{
 				remove(ngSpr);
 				remove(credGroup);
-				FlxG.camera.flash(FlxColor.WHITE, 4);
+				flashAll(FlxColor.WHITE, 4);
 
 				var easteregg:String = FlxG.save.data.psychDevsEasterEgg;
 				if (easteregg == null) easteregg = '';

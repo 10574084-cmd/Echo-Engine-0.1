@@ -86,6 +86,7 @@ import states.TitleState;
 	public var echoInfoOverlay:Bool = false;
 	public var echoTheme:String = 'Default';
 	public var echoQuickBoot:Bool = false;
+	public var echoTitleAnim:Bool = true; // title screen: the logo drops to the middle while Girlfriend blurs
 	public var echoLive:Bool = true; // Echo Live announcements (countdown + everybody joins a song)
 	public var echoLiveSeen:String = ''; // id of the last announcement that was already handled
 	public var echoRandomMusic:Bool = false;

@@ -27,6 +27,10 @@ class EchoExtrasSubState extends BaseOptionsMenu
 			'If checked, the Echo Engine team can announce an event for everybody online:\na countdown appears and then you are taken to a song (or a chart event happens).\nYou can skip any of them with F9 or by tapping the banner. Uncheck to ignore them all.',
 			'echoLive', 'bool'));
 
+		addOption(new Option('Title Logo Animation',
+			'If checked, on the title screen the logo drops from the top to the middle\nwhile Girlfriend gets blurred.',
+			'echoTitleAnim', 'bool'));
+
 		addOption(new Option('Random Menu Music',
 			'If checked, the menus play a random song of the available ones\n(Freaky Menu, Breakfast, Tea Time) instead of always the same.',
 			'echoRandomMusic', 'bool'));
