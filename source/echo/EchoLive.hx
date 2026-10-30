@@ -42,11 +42,40 @@ class EchoLive
 	static var sincePoll:Float = POLL_EVERY - 4; // first look 4 seconds after the game opened
 	static var bar:Sprite = null;
 	static var label:TextField = null;
+	static var fastUntil:Float = 0; // after sending something, look every few seconds so the admin sees it arrive
+	static var lastRead:Float = 0; // when live.json was last read (ms), 0 = never
+	static var lastId:String = '';
+	static var failures:Int = 0;
 
 	/** Starts watching. Called once, when the game is created. */
 	public static function install():Void
 	{
 		FlxG.signals.postUpdate.add(update);
+	}
+
+	/** Look at live.json right now (and every 4 seconds for the next `seconds`). */
+	public static function fastPoll(seconds:Float = 120):Void
+	{
+		fastUntil = Date.now().getTime() + seconds * 1000;
+		sincePoll = POLL_EVERY;
+	}
+
+	/** One line for the admin menus: is Echo Live working, and what is it showing. */
+	public static function status():String
+	{
+		if (ClientPrefs.data != null && !ClientPrefs.data.echoLive) return 'Echo Live is OFF in your options.';
+		var now = Date.now().getTime();
+		var read = lastRead == 0
+			? (failures > 0 ? 'cannot reach GitHub (' + failures + ' tries)' : 'has not read yet')
+			: 'last read ' + Std.int((now - lastRead) / 1000) + 's ago';
+		var shown = 'nothing now';
+		if (active != null)
+		{
+			var secs = Std.int((active.start - now) / 1000);
+			shown = active.kind + (active.song != '' ? ' ' + active.song : '') + (secs > 0 ? ' in ' + secs + 's' : ' (now)');
+		}
+		else if (lastId != '' && lastId == ClientPrefs.data.echoLiveSeen) shown = 'last one (' + lastId.substr(0, 8) + ') already shown';
+		return 'Echo Live: ' + read + ' | ' + shown;
 	}
 
 	// ------------------------------------------------------------------------------------------
@@ -60,7 +89,7 @@ class EchoLive
 			// the number changes every 10 seconds so a cached copy is never used
 			var http = new haxe.Http(URL + '?t=' + Std.int(Date.now().getTime() / 10000));
 			http.onData = onData;
-			http.onError = function(_) {};
+			http.onError = function(_) failures++;
 			http.request(false);
 		}
 		catch (e:Dynamic) {}
@@ -127,7 +156,10 @@ class EchoLive
 	static function onData(raw:String):Void
 	{
 		if (ClientPrefs.data == null) return;
+		lastRead = Date.now().getTime();
+		failures = 0;
 		var a = parse(raw);
+		if (a != null) lastId = a.id;
 		if (a == null || a.id == ClientPrefs.data.echoLiveSeen) return;
 		if (active != null && active.id == a.id) return;
 
@@ -164,7 +196,8 @@ class EchoLive
 		}
 
 		sincePoll += FlxG.elapsed;
-		if (sincePoll >= POLL_EVERY)
+		var interval = Date.now().getTime() < fastUntil ? 4.0 : POLL_EVERY;
+		if (sincePoll >= interval)
 		{
 			sincePoll = 0;
 			poll();
@@ -192,9 +225,7 @@ class EchoLive
 
 		if (remaining > 0)
 		{
-			// do not cover the game while somebody is playing, except for the last seconds
-			if (!inSong || remaining <= 20) display(announcement(a, remaining));
-			else hide();
+			display(announcement(a, remaining), inSong);
 			return;
 		}
 
@@ -202,7 +233,7 @@ class EchoLive
 		{
 			case 'message':
 				if (now - a.start > 12000) finish();
-				else display('ECHO LIVE: ' + a.msg);
+				else display('ECHO LIVE: ' + a.msg, inSong);
 
 			case 'event':
 				// an event only makes sense inside a song: whoever is not in one just misses it
@@ -217,7 +248,7 @@ class EchoLive
 				}
 				if (Std.isOfType(FlxG.state, PlayState))
 				{
-					display('ECHO LIVE: ' + prettySong(a.song) + ' starts when your song ends   [F9 / tap: skip]');
+					display('ECHO LIVE: ' + prettySong(a.song) + ' starts when your song ends   [F9 / tap: skip]', true);
 					return;
 				}
 				if (!stateIsFree()) return;
@@ -266,20 +297,21 @@ class EchoLive
 	// The banner (an OpenFL layer above the game, so it works in every screen)
 	// ------------------------------------------------------------------------------------------
 
-	static function display(message:String):Void
+	static function display(message:String, atBottom:Bool = false):Void
 	{
 		var stage = Lib.current.stage;
 		if (bar == null)
 		{
 			bar = new Sprite();
 			label = new TextField();
-			label.defaultTextFormat = new TextFormat('_sans', 18, 0xFFFFFF, true, null, null, null, null, TextFormatAlign.CENTER);
+			label.defaultTextFormat = new TextFormat('_sans', 19, 0xFFFFFF, true, null, null, null, null, TextFormatAlign.CENTER);
 			label.selectable = false;
 			label.mouseEnabled = false;
-			label.multiline = false;
-			label.wordWrap = false;
-			label.y = 10;
-			label.height = 30;
+			label.multiline = true;
+			label.wordWrap = true;
+			label.x = 8;
+			label.y = 5;
+			label.height = 50;
 			bar.addChild(label);
 			bar.buttonMode = true;
 			bar.addEventListener(MouseEvent.CLICK, function(_) finish());
@@ -288,13 +320,15 @@ class EchoLive
 
 		var w = stage.stageWidth;
 		if (label.text != message) label.text = message;
-		label.width = w;
+		label.width = w - 16;
 		bar.graphics.clear();
-		bar.graphics.beginFill(0x000000, 0.8);
-		bar.graphics.drawRect(0, 0, w, 44);
-		bar.graphics.beginFill(0xFFea71fd & 0xFFFFFF, 1);
-		bar.graphics.drawRect(0, 44, w, 3);
+		bar.graphics.beginFill(0x000000, 0.85);
+		bar.graphics.drawRect(0, 0, w, 56);
+		bar.graphics.beginFill(0xea71fd, 1);
+		bar.graphics.drawRect(0, atBottom ? 0 : 56, w, 3);
 		bar.graphics.endFill();
+		// in a song the bar goes to the bottom so it does not cover the arrows
+		bar.y = atBottom ? stage.stageHeight - 59 : 0;
 		bar.visible = true;
 	}
 

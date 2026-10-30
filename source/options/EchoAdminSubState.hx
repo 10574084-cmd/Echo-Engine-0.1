@@ -143,6 +143,14 @@ class EchoAdminSubState extends BaseOptionsMenu
 					liveNote(typed.trim() == '' ? 'Token forgotten.' : 'Token saved in this browser.');
 				}
 			}));
+		addOption(EchoOptions.action('Live: Status (check now)',
+			'Looks at the announcement file right now and tells you if Echo Live works on this device.',
+			function()
+			{
+				echo.EchoLive.fastPoll(20);
+				liveNote('Checking...');
+				haxe.Timer.delay(function() liveNote(echo.EchoLive.status()), 2500);
+			}));
 		addOption(EchoOptions.action('Live: SEND TO EVERYBODY',
 			'Starts the announcement now. Every player sees the countdown.',
 			function()
@@ -167,7 +175,12 @@ class EchoAdminSubState extends BaseOptionsMenu
 				}
 				if (!js.Browser.window.confirm('Announce to EVERYBODY: $summary?')) return;
 				liveNote('Sending...');
-				EchoLiveSend.send(inputs, function(error:String) liveNote(error == null ? 'Sent! Players see it within a minute.' : error));
+				EchoLiveSend.send(inputs, function(error:String)
+				{
+					if (error != null) { liveNote(error); return; }
+					liveNote('Sent! GitHub needs ~30 s; you will see the banner at the top (bottom in a song).');
+					echo.EchoLive.fastPoll(150);
+				});
 			}));
 		#end
 
