@@ -73,6 +73,21 @@ jobs:
           fi
           exit $status
 
+      # The online mode needs PeerJS. It is downloaded here and published together with the game (same site), so the page
+      # never loads code from a third party at run time. PEERJS_SHA384 pins the file: the build fails if it ever changes.
+      - name: Add PeerJS (self-hosted, hash checked)
+        env:
+          PEERJS_SHA384: ''
+        run: |
+          out=export/release/html5/bin/peerjs.min.js
+          curl -fsSL https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js -o "$out" \
+            || curl -fsSL https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js -o "$out"
+          test "$(wc -c < "$out")" -gt 50000   # an empty or error page is not the library
+          grep -q "Peer" "$out"
+          sum=$(openssl dgst -sha384 -binary "$out" | base64 -w0)
+          echo "::notice title=PeerJS sha384::$sum"
+          if [ -n "$PEERJS_SHA384" ] && [ "$sum" != "$PEERJS_SHA384" ]; then echo "PeerJS changed: $sum"; exit 1; fi
+
       - name: Check the build
         run: |
           cd export/release/html5/bin

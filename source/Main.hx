@@ -116,6 +116,7 @@ class Main extends Sprite
 
 		FlxG.signals.preStateCreate.add(echo.EchoPerf.beforeStateCreate);
 		echo.EchoLive.install();
+		echo.EchoQuick.install();
 
 		#if !mobile
 		fpsVar = new FPSCounter(10, 3, 0xFFFFFF);

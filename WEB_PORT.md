@@ -79,6 +79,7 @@ No hay servidor: el repo tiene una rama `live` con un único archivo `live.json`
 - `event`, `value1`, `value2`, `message`: según el tipo.
 
 Quien está dentro de una canción entra a la nueva al terminar la suya; los que están en un duelo online no se tocan; quien no tiene la canción ve un aviso.
+Los admins también pueden lanzarlo desde dentro del juego (menú `xd`): hace falta pegar un token de GitHub propio (solo este repo, permiso *Actions: read and write*), que se queda en ese navegador y nunca está en el código; sin token no se puede anunciar nada.
 Cualquiera puede saltarse el anuncio con **F9** o tocando la barra, y apagarlos en `Options > Echo Extras > Echo Live Events`.
 Un jugador que abre el juego hasta 10 minutos tarde también entra.
 
@@ -88,7 +89,7 @@ Todo el juego corre en el navegador de cada persona, así que **nada del código
 
 - **Echo Live no se puede falsificar**: el único que puede anunciar algo es quien puede ejecutar el workflow del repo (permisos de GitHub). No hay contraseña ni token dentro del juego. Lo que se lee de `live.json` se valida (tipos, longitudes, lista blanca de eventos, nombre de canción) antes de usarlo.
 - **Online**: cada mensaje del rival se valida (tipo, rango, longitud, caracteres), se limita a 60 mensajes por segundo, y solo el host puede iniciar canciones. Los eventos forzados deben estar en una lista blanca de 4.
-- **PeerJS fijado con SRI** (hash SHA-384): si la CDN o algo en medio cambia el archivo, el navegador lo rechaza. `window.ECHO_ONLINE` (cambiar scripts/servidor) solo funciona en `localhost`.
+- **PeerJS alojado en el propio sitio**: el build lo descarga y lo publica junto al juego (`peerjs.min.js`), así la página no carga código de terceros al jugar; en `pages.yml` se puede fijar su hash (`PEERJS_SHA384`). `window.ECHO_ONLINE` (cambiar scripts/servidor) solo funciona en `localhost`.
 - **Content-Security-Policy** en `index.html`: solo se permiten scripts del propio sitio, unpkg y jsDelivr, y conexiones a este sitio, GitHub (raw) y PeerJS; no se puede incrustar ni cargar `object`/formularios. Además, si alguien mete el juego en un `iframe` de otra página, se sale de él o se oculta.
 - **El menú admin (`xd`)** es solo comodidad local (editores, botplay, god): el código se comprueba en el cliente, así que un usuario avanzado puede saltárselo en *su* copia. Por eso el rival nunca se fía de él: lo que llega por la red se valida igual, y el botplay se marca como `[BOT]`, aunque esa marca la envía el propio cliente y un cliente modificado podría no enviarla.
 - **No cubierto**: las extensiones y los gestores de userscripts quedan fuera de la CSP de la página (el navegador las deja pasar), y un cliente modificado puede mandar puntuaciones falsas en un duelo. Para eso haría falta un servidor propio que juzgue las partidas.

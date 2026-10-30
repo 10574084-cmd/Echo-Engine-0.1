@@ -91,6 +91,7 @@ import states.TitleState;
 	public var echoRandomMusic:Bool = false;
 	public var echoLabAlwaysClean:Bool = false;
 	public var echoSecret:Bool = false;
+	public var echoAdminHash:String = ''; // hash of the admin code chosen with `passecho` (empty: the built-in one)
 	public var echoAdmin:Bool = false;
 	public var echoAdminBot:Bool = false;
 	public var echoAdminGod:Bool = false;

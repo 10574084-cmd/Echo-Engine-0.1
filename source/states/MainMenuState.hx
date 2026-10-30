@@ -234,6 +234,16 @@ class MainMenuState extends MusicBeatState
 					found.scrollFactor.set();
 					add(found);
 					FlxTween.tween(found, {alpha: 0}, 1, {startDelay: 2.5, onComplete: function(_) found.destroy()});
+				case 3:
+					changeItem(secretSel - curSelected);
+					#if html5
+					var result = echo.EchoAdmin.changeCodeDialog();
+					var note = new FlxText(0, 8, FlxG.width, result, 20);
+					note.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+					note.scrollFactor.set();
+					add(note);
+					FlxTween.tween(note, {alpha: 0}, 1, {startDelay: 2.5, onComplete: function(_) note.destroy()});
+					#end
 				default:
 			}
 		}

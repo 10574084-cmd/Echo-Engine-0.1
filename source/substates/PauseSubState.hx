@@ -158,6 +158,19 @@ class PauseSubState extends MusicBeatSubstate
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
 
 		super.create();
+
+		// admin quick menu (O / P / M while playing): go straight to that section of the xd menu
+		if(echo.EchoAdmin.quickOpen != null)
+		{
+			var section = echo.EchoAdmin.quickOpen;
+			echo.EchoAdmin.quickOpen = null;
+			if(echo.EchoAdmin.isAdmin())
+			{
+				var admin = new options.EchoAdminSubState(section);
+				admin.cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
+				openSubState(admin);
+			}
+		}
 	}
 	
 	function getPauseSong()

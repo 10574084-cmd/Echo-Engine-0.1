@@ -6,7 +6,7 @@
 
 	<!-- Security: the page may only load what the game really needs (this blocks code injected by pages or scripts that
 	     are not on this list; browser extensions and userscript managers are not covered by a page policy, see WEB_PORT.md). -->
-	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' data: blob: https://raw.githubusercontent.com https://0.peerjs.com wss://0.peerjs.com; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' data: blob: https://raw.githubusercontent.com https://api.github.com https://0.peerjs.com wss://0.peerjs.com; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 	<meta name="referrer" content="no-referrer">
 	<!-- Not inside someone else's page (clickjacking / overlays): break out, or hide the game if the browser does not allow it. -->
 	<script>
