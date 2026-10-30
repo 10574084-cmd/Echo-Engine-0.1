@@ -77,7 +77,7 @@ jobs:
       # never loads code from a third party at run time. PEERJS_SHA384 pins the file: the build fails if it ever changes.
       - name: Add PeerJS (self-hosted, hash checked)
         env:
-          PEERJS_SHA384: ''
+          PEERJS_SHA384: 'nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR'
         run: |
           out=export/release/html5/bin/peerjs.min.js
           curl -fsSL https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js -o "$out" \
