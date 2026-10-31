@@ -357,6 +357,7 @@ class FreeplayState extends MusicBeatState
 	#else
 	function liveConsume():Bool return false;
 	function onlineAdminForce():Bool return false;
+	function onlineForceStart():Void {}
 	var remoteStartRequested:Bool = false;
 	#end
 
