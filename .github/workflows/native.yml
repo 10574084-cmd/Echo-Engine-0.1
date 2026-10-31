@@ -46,6 +46,6 @@ jobs:
           status=${PIPESTATUS[0]}
           grep -c "Error" native.log || true
           if [ "$status" -ne 0 ]; then
-            grep -v "^Called from" native.log | tail -45 | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=Native build failed::'+t)"
+            grep -v "^Called from" native.log | tail -90 | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=Native build failed::'+t)"
           fi
           exit $status

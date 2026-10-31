@@ -354,8 +354,13 @@ class FreeplayState extends MusicBeatState
 		player.switchPlayMusic();
 		FlxG.sound.playMusic(Paths.music(echo.EchoMusic.menuTrack()), 0);
 	}
+	#else
+	function liveConsume():Bool return false;
+	function onlineAdminForce():Bool return false;
+	var remoteStartRequested:Bool = false;
 	#end
 
+	#if html5
 	/** Admin host: starts the selected song for both players now, wherever the rival is. */
 	function onlineForceStart():Void
 	{
@@ -369,6 +374,7 @@ class FreeplayState extends MusicBeatState
 		online.Session.sendStart(name, Difficulty.getString(curDifficulty), true);
 		remoteStartRequested = true;
 	}
+	#end
 
 	/** Decides if ENTER (or the host's "start") starts the selected song. */
 	function onlineAccept(pressed:Bool):Bool
