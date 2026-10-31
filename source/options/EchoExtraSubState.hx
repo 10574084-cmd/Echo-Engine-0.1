@@ -25,6 +25,10 @@ class EchoExtraSubState extends BaseOptionsMenu
 			'Fewer flashes and motion, hide distracting elements, opacity of notes and health bar, keys, info on screen.',
 			function() openSubState(new EchoAccessibilitySubState())));
 
+		addOption(EchoOptions.action('Shader Packs',
+			'A visual look for the whole game, like the shader packs of Minecraft (Newb, Cinematic, Retro CRT...).',
+			function() openSubState(new EchoShadersSubState())));
+
 		addOption(EchoOptions.action('Echo Extras',
 			'Echo Themes, Quick Boot, Random Menu Music, Stats, Echo Lab and About Echo Engine.',
 			function() openSubState(new EchoExtrasSubState())));

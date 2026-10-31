@@ -86,6 +86,10 @@ import states.TitleState;
 	public var echoInfoOverlay:Bool = false;
 	public var echoTheme:String = 'Default';
 	public var echoQuickBoot:Bool = false;
+	public var echoShaderPack:String = 'Off'; // visual shader pack for the whole game
+	public var echoShaderIntensity:Float = 1; // 0..1
+	public var echoShaderBloom:Bool = true;
+	public var echoShaderSongsOnly:Bool = false;
 	public var echoLang:String = 'Auto'; // menu language: Auto (browser), English, Español
 	public var echoNoteRGB:String = 'Auto'; // note color shader: Auto (the song decides), On, Off
 	public var echoModNotice:Bool = true; // warn when a mod uses scripts or shaders (not available on the web)

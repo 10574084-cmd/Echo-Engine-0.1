@@ -88,6 +88,16 @@ Los admins también pueden lanzarlo desde dentro del juego (menú `xd`): hace fa
 Cualquiera puede saltarse el anuncio con **F9** o tocando la barra, y apagarlos en `Options > Echo Extras > Echo Live Events`.
 Un jugador que abre el juego hasta 10 minutos tarde también entra.
 
+## Shader Packs (estilo Newb de Minecraft PE)
+
+En **Options > Echo Extra > Shader Packs** hay looks visuales para todo el juego, en menús y en canciones:
+Vibrant, Newb, Cinematic, Glow, Dreamy, Retro CRT, Sunset, Night y Noir. Puedes ajustar la **intensidad**, apagar el brillo/desenfoque
+(*Glow and Blur*), usarlos solo durante las canciones o apagarlos todos con *Shaders*.
+
+Cómo funciona: en la web el navegador procesa la imagen (filtros CSS del canvas para saturación/contraste/brillo, y capas encima para tinte,
+viñeta, brillo, desenfoque, líneas de escaneo y grano). Corre en la GPU, funciona en móvil y no depende del motor del juego.
+No son los shaders de los mods (esos no pueden ejecutarse en la web). Para probar uno sin tocar opciones: `?shaderpack=Newb&shaderintensity=0.8`.
+
 ## Seguridad (qué cubre y qué no)
 
 Todo el juego corre en el navegador de cada persona, así que **nada del código del cliente puede ser inviolable**: quien controle su navegador (extensión, userscript, herramientas de desarrollo) puede cambiar lo que ocurre *en su propia copia*. Lo que se hizo:

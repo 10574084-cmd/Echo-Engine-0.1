@@ -116,6 +116,7 @@ class Main extends Sprite
 
 		FlxG.signals.preStateCreate.add(echo.EchoPerf.beforeStateCreate);
 		echo.EchoLive.install();
+		echo.EchoShaderPack.install();
 		echo.EchoQuick.install();
 
 		#if !mobile

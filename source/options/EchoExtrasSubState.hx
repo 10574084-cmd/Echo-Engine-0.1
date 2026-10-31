@@ -26,10 +26,6 @@ class EchoExtrasSubState extends BaseOptionsMenu
 			function(v:String) ClientPrefs.data.echoLang = v,
 			'Auto'));
 
-		addOption(new Option('Shaders',
-			'Visual effects of the game (title screen colors and the like). Off = faster.\nMod shaders (.frag files) cannot run on the web, whatever this says.',
-			'shaders', 'bool'));
-
 		addOption(EchoOptions.string('Note Color Shader',
 			'Auto: each song decides. On: always color the notes with the shader.\nOff: never; use it if a mod\'s arrows already have their own colors and look wrong (strange tints).',
 			['Auto', 'On', 'Off'],
