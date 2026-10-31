@@ -1,0 +1,198 @@
+name: Build apps (PC and Android)
+
+# Builds the game for the web once, then wraps the same build as:
+#   - PC: Windows, Linux and macOS (Electron)
+#   - Android: an APK (Capacitor)
+# and publishes everything in a GitHub Release. Run it by hand: Actions > Build apps (PC and Android) > Run workflow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      - name: Restore haxelib cache
+        uses: actions/cache@v4
+        with:
+          path: ~/haxelib
+          key: haxelib-${{ runner.os }}-${{ hashFiles('.github/workflows/pages.yml') }}
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib setup ~/haxelib
+          haxelib install lime 8.1.2
+          haxelib install openfl 9.3.2
+          haxelib install flixel 5.5.0
+          haxelib install flixel-addons 3.2.1
+          haxelib install flixel-ui 2.5.0
+          haxelib install tjson
+          haxelib install hxcpp
+          haxelib remove flxanimate || true
+          haxelib git flxanimate https://github.com/ShadowMario/flxanimate 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+          git -C "$(haxelib libpath flxanimate)" checkout --force 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+
+      - name: Build (html5, release)
+        run: haxelib run lime build Project.xml html5 -release
+
+      - name: Add PeerJS (self-hosted, hash checked)
+        env:
+          PEERJS_SHA384: 'nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR'
+        run: |
+          out=export/release/html5/bin/peerjs.min.js
+          curl -fsSL https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js -o "$out" \
+            || curl -fsSL https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js -o "$out"
+          test "$(wc -c < "$out")" -gt 50000
+          sum=$(openssl dgst -sha384 -binary "$out" | base64 -w0)
+          if [ "$sum" != "$PEERJS_SHA384" ]; then echo "PeerJS changed: $sum"; exit 1; fi
+
+      - name: Check the build and read the version
+        id: ver
+        run: |
+          cd export/release/html5/bin
+          test -f index.html && test -f PsychEngine.js
+          # Android ignores folders that start with "_": make sure the game has none
+          if [ -n "$(find . -name '_*')" ]; then echo "Folders/files starting with _ :"; find . -name '_*'; exit 1; fi
+          cd "$GITHUB_WORKSPACE"
+          v=$(grep -oP "VERSION = '\K[0-9.]+" source/echo/EchoInfo.hx)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: export/release/html5/bin
+          retention-days: 1
+          compression-level: 1
+
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+
+  desktop:
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: apps/desktop/www
+
+      - name: Package for Windows, Linux and macOS
+        working-directory: apps/desktop
+        run: |
+          npm install --no-audit --no-fund --no-save electron@31.7.7 @electron/packager@18
+          # Windows .exe icon needs Wine, so the exe keeps the Electron icon; everything else is the same
+          npx @electron/packager . "Echo Engine" --out=out --overwrite --prune=false \
+            --ignore='^/(node_modules|out)($|/)' \
+            --platform=win32 --arch=x64
+          npx @electron/packager . "Echo Engine" --out=out --overwrite --prune=false \
+            --ignore='^/(node_modules|out)($|/)' \
+            --platform=linux --arch=x64
+          npx @electron/packager . "Echo Engine" --out=out --overwrite --prune=false \
+            --ignore='^/(node_modules|out)($|/)' \
+            --platform=darwin --arch=x64,arm64
+          ls out
+
+      - name: Check that the Linux app really starts
+        working-directory: apps/desktop
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgbm1 libasound2t64 >/dev/null
+          cd "out/Echo Engine-linux-x64"
+          ECHO_SMOKETEST=1 xvfb-run -a ./"Echo Engine" --no-sandbox --disable-gpu 2>&1 | tail -20
+
+      - name: Zip
+        working-directory: apps/desktop/out
+        run: |
+          v='${{ needs.web.outputs.version }}'
+          for d in */; do
+            d=${d%/}
+            name=$(echo "$d" | sed 's/Echo Engine-/Echo-Engine-'"$v"'-/; s/win32/windows/; s/darwin/mac/')
+            mv "$d" "$name"
+            zip -qry "$name.zip" "$name"
+          done
+          ls -la *.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop
+          path: apps/desktop/out/*.zip
+          retention-days: 1
+          compression-level: 0
+
+  android:
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: apps/android/build/www
+
+      - name: Build the APK
+        working-directory: apps/android
+        run: |
+          cp capacitor.config.json build/
+          cd build
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          npx cap add android
+          npx cap sync android
+          bash ../patch.sh
+          cd android
+          # the game is big: give Gradle room
+          echo "org.gradle.jvmargs=-Xmx4g" >> gradle.properties
+          ./gradlew assembleDebug --no-daemon -q
+          ls -la app/build/outputs/apk/debug/
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Echo-Engine-${{ needs.web.outputs.version }}-android.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: Echo-Engine-*-android.apk
+          retention-days: 1
+          compression-level: 0
+
+  release:
+    needs: [web, desktop, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop
+          path: files
+      - uses: actions/download-artifact@v4
+        with:
+          name: android
+          path: files
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v='${{ needs.web.outputs.version }}'
+          ls -la files
+          gh release view "v$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "v$v" --repo "$GITHUB_REPOSITORY" --title "Echo Engine $v" --target "$GITHUB_SHA" \
+                 --notes "Echo Engine $v for PC (Windows, Linux, macOS) and Android. Play in the browser: https://10574084-cmd.github.io/Echo-Engine-1.1.0. Fan project, not official."
+          gh release upload "v$v" files/* --repo "$GITHUB_REPOSITORY" --clobber

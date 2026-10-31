@@ -1,0 +1,9 @@
+{
+  "name": "echo-engine",
+  "productName": "Echo Engine",
+  "version": "1.2.0",
+  "description": "Echo Engine: a Psych Engine web port, as a desktop app",
+  "main": "main.js",
+  "license": "Apache-2.0",
+  "private": true
+}

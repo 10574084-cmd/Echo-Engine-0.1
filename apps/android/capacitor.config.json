@@ -1,0 +1,7 @@
+{
+  "appId": "com.echoengine.game",
+  "appName": "Echo Engine",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false, "webContentsDebuggingEnabled": false }
+}

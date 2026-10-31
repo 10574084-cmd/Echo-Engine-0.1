@@ -99,6 +99,15 @@ viñeta, brillo, desenfoque, líneas de escaneo y grano). Corre en la GPU, funci
 **Ray Tracing y RTX Shadows** simulan una luz en la esquina, rayos de luz que respiran y sombras suaves; no es ray tracing real (un juego 2D en el navegador no calcula rayos), pero da ese aspecto.
 No son los shaders de los mods (esos no pueden ejecutarse en la web). Para probar uno sin tocar opciones: `?shaderpack=Newb&shaderintensity=0.8`.
 
+## Versiones para PC y Android
+
+El mismo juego de la web, empaquetado como app. No hay una versión nueva del código: es la web dentro de una ventana (PC) o dentro de una app (Android), así que tiene las mismas funciones y las mismas limitaciones (los mods con Lua/HScript/shaders siguen sin correr).
+
+- **PC:** Windows, Linux y macOS (Electron). Se descomprime el zip y se abre `Echo Engine`. F11 = pantalla completa. En Windows puede salir el aviso de SmartScreen y en Mac el de Gatekeeper, porque la app no está firmada.
+- **Android:** un APK (se instala desde el archivo; hay que permitir instalar apps de orígenes desconocidos). Va en horizontal y a pantalla completa.
+- **Cómo se generan:** en GitHub, `Actions > Build apps (PC and Android) > Run workflow`. Al terminar queda todo en `Releases` (v1.2.0, etc.). Está en `.github/workflows/apps.yml`; el código de las envolturas está en `apps/`.
+- **PlayStation 4:** no hay versión. Publicar en PS4 requiere ser desarrollador con licencia de Sony y su kit oficial; no se puede hacer con un proyecto de aficionados.
+
 ## Seguridad (qué cubre y qué no)
 
 Todo el juego corre en el navegador de cada persona, así que **nada del código del cliente puede ser inviolable**: quien controle su navegador (extensión, userscript, herramientas de desarrollo) puede cambiar lo que ocurre *en su propia copia*. Lo que se hizo:

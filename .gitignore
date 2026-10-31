@@ -22,3 +22,7 @@ vs_Community.exe
 !.vscode/extensions.json
 art/build_html.bat
 art/build_html-debug.bat
+apps/desktop/www/
+apps/desktop/out/
+apps/desktop/node_modules/
+apps/android/build/
