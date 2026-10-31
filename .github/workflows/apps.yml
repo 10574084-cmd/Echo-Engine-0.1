@@ -93,18 +93,24 @@ jobs:
       - name: Package for Windows, Linux and macOS
         working-directory: apps/desktop
         run: |
-          npm install --no-audit --no-fund --no-save electron@31.7.7 @electron/packager@18
-          # Windows .exe icon needs Wine, so the exe keeps the Electron icon; everything else is the same
-          npx @electron/packager . "Echo Engine" --out=out --overwrite --prune=false \
-            --ignore='^/(node_modules|out)($|/)' \
-            --platform=win32 --arch=x64
-          npx @electron/packager . "Echo Engine" --out=out --overwrite --prune=false \
-            --ignore='^/(node_modules|out)($|/)' \
-            --platform=linux --arch=x64
-          npx @electron/packager . "Echo Engine" --out=out --overwrite --prune=false \
-            --ignore='^/(node_modules|out)($|/)' \
-            --platform=darwin --arch=x64,arm64
-          ls out
+          set +e
+          {
+            set -e
+            npm install --no-audit --no-fund --no-save electron@31.7.7 @electron/packager@18
+            # Windows .exe icon needs Wine, so the exe keeps the Electron icon; everything else is the same
+            for target in "win32 x64" "linux x64" "darwin x64,arm64"; do
+              set -- $target
+              npx @electron/packager . "Echo Engine" --out=out --overwrite --prune=false \
+                --electron-version=31.7.7 --ignore='^/(node_modules|out)($|/)' \
+                --platform=$1 --arch=$2
+            done
+            ls out
+          } 2>&1 | tee package.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tail -40 package.log | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=Packaging failed::'+t)"
+          fi
+          exit $status
 
       - name: Check that the Linux app really starts
         working-directory: apps/desktop
