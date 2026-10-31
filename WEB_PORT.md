@@ -106,7 +106,7 @@ El mismo juego de la web, empaquetado como app. No hay una versión nueva del c�
 - **PC:** Windows, Linux y macOS (Electron). Se descomprime el zip y se abre `Echo Engine`. F11 = pantalla completa. En Windows puede salir el aviso de SmartScreen y en Mac el de Gatekeeper, porque la app no está firmada.
 - **Android:** un APK (se instala desde el archivo; hay que permitir instalar apps de orígenes desconocidos). Va en horizontal y a pantalla completa.
 - **Cómo se generan:** en GitHub, `Actions > Build apps (PC and Android) > Run workflow`. Al terminar queda todo en `Releases` (v1.2.0, etc.). Está en `.github/workflows/apps.yml`; el código de las envolturas está en `apps/`.
-- **PlayStation 4:** no hay versión. Publicar en PS4 requiere ser desarrollador con licencia de Sony y su kit oficial; no se puede hacer con un proyecto de aficionados.
+- **PlayStation 4 (homebrew, GoldHEN):** `Echo-Engine-1.2.0-ps4.pkg`, hecho con OpenOrbis (workflow `ps4.yml`, código en `apps/ps4/`). No es un puerto nativo: es un lanzador que abre la versión web en el navegador de la PS4, porque ahí ya hay un motor web y el juego no existe como programa nativo. Hace falta una consola con GoldHEN, internet y, muy probablemente, un teclado USB (el navegador de la PS4 no usa el mando como teclado). **No está probado en una consola real**: el paquete compila y se firma, pero no sé si el navegador de tu firmware acepta el certificado de GitHub Pages ni si aguanta el juego.
 
 ## Seguridad (qué cubre y qué no)
 
