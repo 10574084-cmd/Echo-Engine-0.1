@@ -15,20 +15,13 @@ jobs:
             mkdir -p /tmp/tc && cd /tmp/tc
             gh release download v0.5.4 --repo OpenOrbis/OpenOrbis-PS4-Toolchain --pattern 'toolchain-llvm-18.tar.gz'
             tar xzf toolchain-llvm-18.tar.gz
-            ls
-            ls */ | head -30
-            find . -maxdepth 3 -name 'create-fself' -o -maxdepth 3 -name 'PkgTool.Core' | head
-            git clone -q --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain /tmp/oo
-            echo ---- sce_sys
-            find /tmp/oo/samples/hello_world/sce_sys | head
-            echo ---- grep browser
-            grep -rIl "WebBrowser" /tmp/oo/include /tmp/oo/src /tmp/oo/samples 2>/dev/null | head
-            grep -rIn "WebBrowser" /tmp/oo/include 2>/dev/null | head -5
-            echo ---- libs
-            ls $(find /tmp/tc -type d -name lib | head -1) | head -80
-            echo ---- system sample
-            ls /tmp/oo/samples/system
-            echo ---- dotnet
-            dotnet --version
-          } 2>&1 | head -140 > probe.txt
+            T=/tmp/tc/OpenOrbis/PS4Toolchain
+            ls $T; ls $T/bin $T/bin/linux; ls $T/lib | grep -i "SystemService\|libc\|kernel\|crt1\|libSceLibcInternal"
+            echo ---- header
+            grep -n "WebBrowser\|Launch\|^#include" $T/include/orbis/SystemService.h | head -30
+            echo ---- samples in toolchain
+            ls $T/samples | head
+            echo ---- deps
+            which clang ld.lld; clang --version | head -1
+          } 2>&1 | head -100 > probe.txt
           python3 -c "import sys; t=open('probe.txt').read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::notice title=probe::'+t)"
