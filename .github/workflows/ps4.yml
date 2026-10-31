@@ -25,6 +25,13 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y -qq clang lld imagemagick >/dev/null
             export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+            # PkgTool.Core is built on an old .NET that needs OpenSSL 1.1 (this runner only has 3.x)
+            cd /tmp
+            for u in http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb \
+                     http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb; do
+              curl -fsSL "$u" -o libssl1.1.deb && break
+            done
+            sudo dpkg -i libssl1.1.deb
 
             mkdir -p /tmp/tc && cd /tmp/tc
             gh release download v0.5.4 --repo OpenOrbis/OpenOrbis-PS4-Toolchain --pattern 'toolchain-llvm-18.tar.gz'
