@@ -49,6 +49,14 @@ jobs:
               -e 's/^LIBS .*/LIBS        := -lc -lkernel -lc++ -lSceSystemService/' \
               Makefile
             grep -n "^TITLE\|^VERSION\|^CONTENT_ID\|^LIBS" Makefile
+            # the "about" module of the sample: use the one that ships with the toolchain if there is one, otherwise build without it
+            found=$(find /tmp/tc /tmp/oo -name right.sprx | head -1)
+            echo "right.sprx: ${found:-not found}"
+            if [ -n "$found" ]; then
+              cp "$found" sce_sys/about/right.sprx
+            else
+              sed -i 's# sce_sys/about/right.sprx##' Makefile
+            fi
             make
             ls -la *.pkg
             cp ./*.pkg "$GITHUB_WORKSPACE/Echo-Engine-1.2.0-ps4.pkg"
