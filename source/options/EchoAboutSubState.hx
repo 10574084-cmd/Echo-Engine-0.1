@@ -61,7 +61,7 @@ KNOWN LIMITS
 		var top = new FlxSprite().makeGraphic(FlxG.width, 80, FlxColor.BLACK);
 		top.alpha = 0.7;
 		add(top);
-		var title = new Alphabet(0, 5, 'About Echo Engine', true);
+		var title = new Alphabet(0, 5, echo.EchoLang.t('About Echo Engine'), true);
 		title.scaleX = title.scaleY = 0.8;
 		title.updateHitbox();
 		title.screenCenter(X);
@@ -70,7 +70,7 @@ KNOWN LIMITS
 		var bottom = new FlxSprite(0, FlxG.height - 32).makeGraphic(FlxG.width, 32, FlxColor.BLACK);
 		bottom.alpha = 0.7;
 		add(bottom);
-		var hint = new FlxText(0, FlxG.height - 28, FlxG.width, 'UP / DOWN: scroll   -   BACK: close', 18);
+		var hint = new FlxText(0, FlxG.height - 28, FlxG.width, echo.EchoLang.t('UP / DOWN: scroll   -   BACK: close'), 18);
 		hint.setFormat(Paths.font('vcr.ttf'), 18, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(hint);
 

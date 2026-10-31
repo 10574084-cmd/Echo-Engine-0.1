@@ -58,7 +58,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 		descBox.alpha = 0.6;
 		add(descBox);
 
-		var titleText:Alphabet = new Alphabet(75, 45, title, true);
+		var titleText:Alphabet = new Alphabet(75, 45, echo.EchoLang.t(title), true);
 		titleText.setScale(0.6);
 		titleText.alpha = 0.4;
 		add(titleText);

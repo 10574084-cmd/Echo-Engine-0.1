@@ -79,4 +79,16 @@ class EchoPerf
 		#end
 		trace('echo: cache cleaned (' + flixel.util.FlxStringUtil.formatBytes(Math.max(0, before - System.totalMemory)) + ' freed)');
 	}
+
+	/** Echo Extras > Note Color Shader: Auto leaves the chart's own choice, On/Off force it for the song about to start. */
+	public static function applyNoteShader(song:backend.Song.SwagSong):Void
+	{
+		if (song == null || ClientPrefs.data == null) return;
+		switch (ClientPrefs.data.echoNoteRGB)
+		{
+			case 'On': song.disableNoteRGB = false;
+			case 'Off': song.disableNoteRGB = true;
+			default:
+		}
+	}
 }

@@ -37,28 +37,28 @@ class EchoStatsSubState extends MusicBeatSubstate
 	{
 		var s = EchoStats.get();
 		var out = new StringBuf();
-		out.add('Songs played:       ${s.songsPlayed}\n');
-		out.add('Songs completed:    ${s.songsCompleted}\n');
-		out.add('Total score:        ${s.totalScore}\n');
-		out.add('Notes hit:          ${s.notesHit}      Misses: ${s.misses}\n');
-		out.add('Time playing:       ${EchoStats.formatTime(s.seconds)}\n');
+		out.add(echo.EchoLang.t('Songs played:       ') + '${s.songsPlayed}\n');
+		out.add(echo.EchoLang.t('Songs completed:    ') + '${s.songsCompleted}\n');
+		out.add(echo.EchoLang.t('Total score:        ') + '${s.totalScore}\n');
+		out.add(echo.EchoLang.t('Notes hit:          ') + '${s.notesHit}      ' + echo.EchoLang.t('Misses: ') + '${s.misses}\n');
+		out.add(echo.EchoLang.t('Time playing:       ') + '${EchoStats.formatTime(s.seconds)}\n');
 		var bestScore:String = s.bestScore > 0 ? '${s.bestScore}  (${s.bestScoreSong})' : '-';
 		var bestAcc:String = s.bestAccuracy > 0 ? '${Math.round(s.bestAccuracy * 10000) / 100}%  (${s.bestAccuracySong})' : '-';
-		out.add('\nBest score:         $bestScore\n');
-		out.add('Best accuracy:      $bestAcc\n');
+		out.add('\n' + echo.EchoLang.t('Best score:         ') + bestScore + '\n');
+		out.add(echo.EchoLang.t('Best accuracy:      ') + '$bestAcc\n');
 
 		// the five best saved scores
 		var records:Array<{song:String, score:Int}> = [];
 		for (song => score in Highscore.songScores)
 			if (score > 0) records.push({song: song, score: score});
 		records.sort(function(a, b) return b.score - a.score);
-		out.add('\nTop songs:\n');
+		out.add('\n' + echo.EchoLang.t('Top songs:') + '\n');
 		if (records.length == 0) out.add('  (play a song to set a record)\n');
 		for (i in 0...Std.int(Math.min(5, records.length)))
 			out.add('  ${i + 1}. ${prettySong(records[i].song)}   ${records[i].score}\n');
 
 		lines.text = out.toString();
-		hint.text = confirmReset ? 'Press RESET again to erase the stats (any other key cancels)' : 'BACK: close   -   RESET: erase the stats';
+		hint.text = confirmReset ? echo.EchoLang.t('Press RESET again to erase the stats (any other key cancels)') : echo.EchoLang.t('BACK: close   -   RESET: erase the stats');
 	}
 
 	static function prettySong(key:String):String

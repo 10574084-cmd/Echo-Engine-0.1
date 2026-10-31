@@ -271,6 +271,7 @@ class PlayState extends MusicBeatState
 
 	override public function create()
 	{
+		echo.EchoPerf.applyNoteShader(SONG);
 		//trace('Playback Rate: ' + playbackRate);
 		#if html5
 		// developer helper: add ?seek=45 to the address to start songs at second 45 (used to test long songs)
@@ -580,6 +581,20 @@ class PlayState extends MusicBeatState
 		scoreTxt.visible = !ClientPrefs.data.hideHud;
 		updateScore(false);
 		uiGroup.add(scoreTxt);
+
+		if(ClientPrefs.data.echoModNotice)
+		{
+			var warning = echo.EchoModCheck.notice(SONG.song);
+			if(warning != null)
+			{
+				var warn = new FlxText(20, FlxG.height * 0.3, FlxG.width - 40, warning, 24);
+				warn.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.YELLOW, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+				warn.scrollFactor.set();
+				warn.borderSize = 1.5;
+				uiGroup.add(warn);
+				FlxTween.tween(warn, {alpha: 0}, 1, {startDelay: 9, onComplete: function(_) { uiGroup.remove(warn); warn.destroy(); }});
+			}
+		}
 
 		if(ClientPrefs.data.echoInfoOverlay)
 		{

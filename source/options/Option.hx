@@ -36,8 +36,8 @@ class Option
 
 	public function new(name:String, description:String = '', variable:String, type:String = 'bool', ?options:Array<String> = null)
 	{
-		this.name = name;
-		this.description = description;
+		this.name = echo.EchoLang.t(name);
+		this.description = echo.EchoLang.t(description);
 		this.variable = variable;
 		this.type = type;
 		this.options = options;

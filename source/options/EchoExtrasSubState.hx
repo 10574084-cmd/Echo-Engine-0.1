@@ -19,6 +19,28 @@ class EchoExtrasSubState extends BaseOptionsMenu
 		option.onChange = function() bg.color = EchoTheme.color(0xFFea71fd);
 		addOption(option);
 
+		addOption(EchoOptions.string('Language',
+			'Changes the language of the menus. Auto follows your browser.\nReopen the menu to see it changed (songs, mods and the main menu pictures stay in English).',
+			echo.EchoLang.LANGUAGES,
+			function() return ClientPrefs.data.echoLang,
+			function(v:String) ClientPrefs.data.echoLang = v,
+			'Auto'));
+
+		addOption(new Option('Shaders',
+			'Visual effects of the game (title screen colors and the like). Off = faster.\nMod shaders (.frag files) cannot run on the web, whatever this says.',
+			'shaders', 'bool'));
+
+		addOption(EchoOptions.string('Note Color Shader',
+			'Auto: each song decides. On: always color the notes with the shader.\nOff: never; use it if a mod\'s arrows already have their own colors and look wrong (strange tints).',
+			['Auto', 'On', 'Off'],
+			function() return ClientPrefs.data.echoNoteRGB,
+			function(v:String) ClientPrefs.data.echoNoteRGB = v,
+			'Auto'));
+
+		addOption(new Option('Mod Warnings',
+			'If checked, a notice appears when a song of a mod uses Lua / HScript scripts or shaders,\nwhich the web version cannot run (black backgrounds, missing characters, odd colors).',
+			'echoModNotice', 'bool'));
+
 		addOption(new Option('Quick Boot',
 			'If checked, skips the intro animation of the title screen.',
 			'echoQuickBoot', 'bool'));
