@@ -117,7 +117,11 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgbm1 libasound2t64 >/dev/null
           cd "out/Echo Engine-linux-x64"
-          ECHO_SMOKETEST=1 xvfb-run -a ./"Echo Engine" --no-sandbox --disable-gpu 2>&1 | tail -20
+          set +e
+          ECHO_SMOKETEST=1 timeout 120 xvfb-run -a ./"Echo Engine" --no-sandbox --disable-gpu > smoke.log 2>&1
+          status=$?
+          tail -15 smoke.log | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::notice title=App start test (exit '+'$status'+')::'+t)"
+          exit $status
 
       - name: Zip
         working-directory: apps/desktop/out
