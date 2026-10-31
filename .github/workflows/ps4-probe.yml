@@ -1,0 +1,28 @@
+name: PS4 probe
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Look at the OpenOrbis toolchain
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            gh release list --repo OpenOrbis/OpenOrbis-PS4-Toolchain --limit 5
+            gh release view --repo OpenOrbis/OpenOrbis-PS4-Toolchain --json tagName,assets --jq '.tagName, (.assets[]|.name+" "+(.size|tostring))'
+            git clone -q --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain /tmp/oo
+            ls /tmp/oo /tmp/oo/samples /tmp/oo/samples/hello_world
+            echo ---- Makefile
+            cat /tmp/oo/samples/hello_world/Makefile
+            echo ---- bin
+            ls /tmp/oo/bin /tmp/oo/bin/linux 2>&1 | head -20
+            echo ---- headers
+            grep -rl "LaunchWebBrowser\|sceSystemService" /tmp/oo/include 2>/dev/null | head
+            grep -rn "LaunchWebBrowser" /tmp/oo/include 2>/dev/null | head -3
+            ls /tmp/oo/lib 2>/dev/null | head -50
+          } 2>&1 | head -150 > probe.txt
+          python3 -c "import sys; t=open('probe.txt').read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::notice title=probe::'+t)"
