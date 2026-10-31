@@ -24,6 +24,11 @@ project). The game\'s own art, music and trademarks belong to their owners.
 Use only mods and content you have permission to use.
 
 CHANGE LOG
+1.2.0
+- Shader Packs (Options > Echo Extra): looks for the whole game, including Ray Tracing
+  and RTX Shadows (simulated light, god rays and soft shadows).
+- Echo Live: announcements for every player, quick admin menus, Language option.
+
 1.1.0
 - Echo Extra settings: optimization presets, touch controls (size, spacing,
   opacity, layouts and a button editor), accessibility and HUD, themes, quick

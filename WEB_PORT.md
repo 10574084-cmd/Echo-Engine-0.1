@@ -91,11 +91,12 @@ Un jugador que abre el juego hasta 10 minutos tarde también entra.
 ## Shader Packs (estilo Newb de Minecraft PE)
 
 En **Options > Echo Extra > Shader Packs** hay looks visuales para todo el juego, en menús y en canciones:
-Vibrant, Newb, Cinematic, Glow, Dreamy, Retro CRT, Sunset, Night y Noir. Puedes ajustar la **intensidad**, apagar el brillo/desenfoque
+Vibrant, Newb, **Ray Tracing**, **RTX Shadows**, Cinematic, Glow, Dreamy, Retro CRT, Sunset, Night y Noir. Puedes ajustar la **intensidad**, apagar el brillo/desenfoque
 (*Glow and Blur*), usarlos solo durante las canciones o apagarlos todos con *Shaders*.
 
 Cómo funciona: en la web el navegador procesa la imagen (filtros CSS del canvas para saturación/contraste/brillo, y capas encima para tinte,
 viñeta, brillo, desenfoque, líneas de escaneo y grano). Corre en la GPU, funciona en móvil y no depende del motor del juego.
+**Ray Tracing y RTX Shadows** simulan una luz en la esquina, rayos de luz que respiran y sombras suaves; no es ray tracing real (un juego 2D en el navegador no calcula rayos), pero da ese aspecto.
 No son los shaders de los mods (esos no pueden ejecutarse en la web). Para probar uno sin tocar opciones: `?shaderpack=Newb&shaderintensity=0.8`.
 
 ## Seguridad (qué cubre y qué no)

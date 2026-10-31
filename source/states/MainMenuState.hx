@@ -95,7 +95,7 @@ class MainMenuState extends MusicBeatState
 			menuItem.screenCenter(X);
 		}
 
-		var psychVer:FlxText = new FlxText(12, FlxG.height - 44, 0, "Echo Engine 1.1.0 (Psych Engine v" + psychEngineVersion + ")", 12);
+		var psychVer:FlxText = new FlxText(12, FlxG.height - 44, 0, "Echo Engine 1.2.0 (Psych Engine v" + psychEngineVersion + ")", 12);
 		psychVer.scrollFactor.set();
 		psychVer.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(psychVer);

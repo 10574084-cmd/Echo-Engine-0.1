@@ -18,6 +18,8 @@ class EchoShaderPack
 	static final PACKS:Map<String, Array<Float>> = [
 		'Vibrant'   => [1.40, 1.08, 1.02, 0.15, 0.10, 0.0, 0.0,  0.00, 255, 255, 255],
 		'Newb'      => [1.22, 1.12, 1.00, 0.34, 0.40, 0.0, 0.0,  0.05, 255, 246, 226],
+		'Ray Tracing' => [1.18, 1.14, 1.00, 0.42, 0.45, 0.0, 0.0, 0.03, 255, 247, 232],
+		'RTX Shadows' => [1.10, 1.22, 0.97, 0.55, 0.30, 0.0, 0.0, 0.04, 245, 245, 255],
 		'Cinematic' => [0.88, 1.24, 0.95, 0.55, 0.10, 0.0, 0.0,  0.10, 255, 244, 232],
 		'Glow'      => [1.12, 1.04, 1.00, 0.18, 0.85, 0.0, 0.0,  0.00, 255, 255, 255],
 		'Dreamy'    => [1.15, 0.98, 1.06, 0.22, 0.55, 0.6, 0.0,  0.00, 255, 238, 255],
@@ -27,10 +29,16 @@ class EchoShaderPack
 		'Noir'      => [0.00, 1.30, 1.00, 0.50, 0.10, 0.0, 0.0,  0.12, 255, 255, 255]
 	];
 
-	public static final NAMES:Array<String> = ['Off', 'Vibrant', 'Newb', 'Cinematic', 'Glow', 'Dreamy', 'Retro CRT', 'Sunset', 'Night', 'Noir'];
+	public static final NAMES:Array<String> = ['Off', 'Vibrant', 'Newb', 'Ray Tracing', 'RTX Shadows', 'Cinematic', 'Glow', 'Dreamy', 'Retro CRT', 'Sunset', 'Night', 'Noir'];
 
 	#if html5
 	static var root:js.html.DivElement = null;
+	/** Simulated lighting: name -> [light strength, god rays, shadow strength] */
+	static final LIGHT:Map<String, Array<Float>> = [
+		'Ray Tracing' => [0.55, 0.16, 0.45],
+		'RTX Shadows' => [0.35, 0.08, 0.80]
+	];
+
 	static var layers:Map<String, js.html.DivElement> = new Map();
 	static var applied:String = 'Off';
 	static var appliedKey:String = '';
@@ -95,6 +103,17 @@ class EchoShaderPack
 	static function showLayers(show:Bool):Void
 	{
 		for (el in layers) (cast el.style : Dynamic).display = show ? 'block' : 'none';
+	}
+
+	static var styled = false;
+
+	static function ensureStyle():Void
+	{
+		if (styled) return;
+		styled = true;
+		var st = js.Browser.document.createStyleElement();
+		st.textContent = '@keyframes echoRays{0%,100%{opacity:.55;transform:rotate(-1.5deg)}50%{opacity:1;transform:rotate(1.5deg)}}';
+		js.Browser.document.head.appendChild(st);
 	}
 
 	static function canvas():js.html.Element
@@ -173,6 +192,31 @@ class EchoShaderPack
 		grs.display = v[7] * k > 0 ? 'block' : 'none';
 		grs.backgroundImage = GRAIN;
 		grs.opacity = Std.string(Math.min(1, v[7] * k * 3));
+
+		// simulated ray tracing: a light in the top-left corner, god rays that breathe, and soft shadows on the opposite side
+		var lt = LIGHT.get(name);
+		var lightOn = lt != null;
+		var light = layer('light', 'screen');
+		var ls:Dynamic = light.style;
+		ls.display = lightOn ? 'block' : 'none';
+		var rays = layer('rays', 'screen');
+		var rs:Dynamic = rays.style;
+		rs.display = lightOn ? 'block' : 'none';
+		var shade = layer('shade', 'multiply');
+		var sh:Dynamic = shade.style;
+		sh.display = lightOn ? 'block' : 'none';
+		if (lightOn)
+		{
+			ensureStyle();
+			ls.background = 'radial-gradient(circle at 16% 10%, rgba(255,236,190,' + (lt[0] * k) + ') 0%, rgba(255,220,160,' + (lt[0] * k * 0.35) + ') 30%, rgba(255,220,160,0) 65%)';
+			rs.background = 'repeating-conic-gradient(from 195deg at 16% 10%, rgba(255,240,200,' + (lt[1] * k) + ') 0deg 1.6deg, rgba(255,240,200,0) 1.6deg 6deg)';
+			rs.webkitMaskImage = 'radial-gradient(circle at 16% 10%, #000 0%, rgba(0,0,0,0) 85%)';
+			rs.maskImage = 'radial-gradient(circle at 16% 10%, #000 0%, rgba(0,0,0,0) 85%)';
+			rs.animation = 'echoRays 7s ease-in-out infinite';
+			var sd = lt[2] * k;
+			sh.background = 'radial-gradient(ellipse at 80% 95%, rgba(8,10,32,' + sd + ') 0%, rgba(8,10,32,' + (sd * 0.5) + ') 35%, rgba(255,255,255,1) 75%), '
+				+ 'linear-gradient(to bottom right, rgba(255,255,255,1) 30%, rgba(30,34,60,' + (sd * 0.8) + ') 100%)';
+		}
 
 		applied = name;
 		appliedKey = key;

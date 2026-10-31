@@ -12,7 +12,7 @@ class EchoShadersSubState extends BaseOptionsMenu
 		rpcTitle = 'Shader Packs Menu';
 
 		addOption(EchoOptions.string('Shader Pack',
-			'A look for the whole game, like the shader packs of Minecraft.\nNewb: warm light, glow and soft vignette. Cinematic: dark corners and film grain.\nGlow, Dreamy, Retro CRT, Sunset, Night, Noir and Vibrant change the colors and effects.',
+			'A look for the whole game, like the shader packs of Minecraft.\nRay Tracing and RTX Shadows: simulated light, god rays and soft shadows (not real ray tracing).\nNewb: warm light, glow and soft vignette. Cinematic: dark corners and film grain.\nGlow, Dreamy, Retro CRT, Sunset, Night, Noir and Vibrant change the colors and effects.',
 			EchoShaderPack.NAMES,
 			function() return ClientPrefs.data.echoShaderPack,
 			function(v:String) ClientPrefs.data.echoShaderPack = v,
