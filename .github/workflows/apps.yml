@@ -194,5 +194,5 @@ jobs:
           ls -la files
           gh release view "v$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
             || gh release create "v$v" --repo "$GITHUB_REPOSITORY" --title "Echo Engine $v" --target "$GITHUB_SHA" \
-                 --notes "Echo Engine $v for PC (Windows, Linux, macOS) and Android. Play in the browser: https://10574084-cmd.github.io/Echo-Engine-1.1.0. Fan project, not official."
+                 --notes "Echo Engine $v for PC (Windows, Linux, macOS) and Android. Play in the browser: https://10574084-cmd.github.io/Echo-Engine-1.2.0. Fan project, not official."
           gh release upload "v$v" files/* --repo "$GITHUB_REPOSITORY" --clobber

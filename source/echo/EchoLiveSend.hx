@@ -14,7 +14,7 @@ import js.Browser;
  */
 class EchoLiveSend
 {
-	static inline var REPO = '10574084-cmd/Echo-Engine-1.1.0';
+	static inline var REPO = '10574084-cmd/Echo-Engine-1.2.0';
 	static inline var KEY = 'echo-live-token';
 
 	public static function token():String

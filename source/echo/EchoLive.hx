@@ -34,7 +34,7 @@ import states.TitleState;
 class EchoLive
 {
 	#if html5
-	static inline var URL = 'https://raw.githubusercontent.com/10574084-cmd/Echo-Engine-1.1.0/live/live.json';
+	static inline var URL = 'https://raw.githubusercontent.com/10574084-cmd/Echo-Engine-1.2.0/live/live.json';
 	static inline var POLL_EVERY = 30.0; // seconds
 	static inline var SONG_GRACE = 600000.0; // a player that opens the game up to 10 minutes late still joins the song
 
