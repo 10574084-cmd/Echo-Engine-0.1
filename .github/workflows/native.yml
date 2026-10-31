@@ -1,0 +1,51 @@
+name: Native build probe (C++, "native_lite")
+
+# Step 1 of the native console port: does Echo Engine generate/compile as C++ without Lua, HScript, Discord and videos?
+# Run it by hand: Actions > Native build probe > Run workflow. "compile" = also compile the C++ (slow); otherwise only the Haxe -> C++ step.
+
+on:
+  workflow_dispatch:
+    inputs:
+      compile:
+        description: 'Also compile the generated C++ (takes much longer)'
+        type: boolean
+        default: false
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib setup ~/haxelib
+          haxelib install lime 8.1.2
+          haxelib install openfl 9.3.2
+          haxelib install flixel 5.5.0
+          haxelib install flixel-addons 3.2.1
+          haxelib install flixel-ui 2.5.0
+          haxelib install tjson
+          haxelib install hxcpp
+          haxelib git flxanimate https://github.com/ShadowMario/flxanimate 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+          git -C "$(haxelib libpath flxanimate)" checkout --force 6d11b11f65f822a2a2ad01018fa8bcea0437bf5a
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgl1-mesa-dev libglu1-mesa-dev libasound2-dev libx11-dev libxext-dev libxi-dev libxrandr-dev >/dev/null
+
+      - name: Generate (and compile) the C++
+        run: |
+          set +e
+          extra=""
+          if [ "${{ inputs.compile }}" != "true" ]; then extra="-Dno-compilation"; fi
+          haxelib run lime build Project.xml linux -release -Dnative_lite -DskipIcons $extra 2>&1 | tee native.log
+          status=${PIPESTATUS[0]}
+          grep -c "Error" native.log || true
+          if [ "$status" -ne 0 ]; then
+            grep -v "^Called from" native.log | grep -B2 -A3 "Error\|error:" | head -60 | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=Native build failed::'+t)"
+          fi
+          exit $status
