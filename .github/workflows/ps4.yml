@@ -1,0 +1,67 @@
+name: Build PS4 package (homebrew, OpenOrbis)
+
+# Builds a PS4 homebrew package (.pkg) for consoles running GoldHEN. It is a launcher that opens the web version of the game
+# in the PS4 web browser (see apps/ps4/main.c). Run it by hand: Actions > Build PS4 package > Run workflow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ps4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          {
+            set -e
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq clang lld imagemagick >/dev/null
+            export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+            mkdir -p /tmp/tc && cd /tmp/tc
+            gh release download v0.5.4 --repo OpenOrbis/OpenOrbis-PS4-Toolchain --pattern 'toolchain-llvm-18.tar.gz'
+            tar xzf toolchain-llvm-18.tar.gz
+            export OO_PS4_TOOLCHAIN=/tmp/tc/OpenOrbis/PS4Toolchain
+            chmod +x "$OO_PS4_TOOLCHAIN"/bin/linux/*
+
+            # the toolchain's own hello_world sample is the project skeleton (its Makefile builds, signs and packs everything)
+            git clone -q --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain /tmp/oo
+            work=/tmp/work/hello_world
+            mkdir -p /tmp/work && cp -r /tmp/oo/samples/hello_world "$work"
+            cd "$work"
+            rm -f hello_world/*.c hello_world/*.cpp hello_world/*.h
+            cp "$GITHUB_WORKSPACE/apps/ps4/main.c" hello_world/main.c
+            convert "$GITHUB_WORKSPACE/art/iconOG.png" -background none -resize 512x512 -gravity center -extent 512x512 sce_sys/icon0.png
+
+            sed -i \
+              -e 's/^TITLE .*/TITLE       := Echo Engine/' \
+              -e 's/^VERSION .*/VERSION     := 1.20/' \
+              -e 's/^TITLE_ID .*/TITLE_ID    := ECHO00012/' \
+              -e 's/^CONTENT_ID .*/CONTENT_ID  := IV0000-ECHO00012_00-ECHOENGINE000000/' \
+              -e 's/^LIBS .*/LIBS        := -lc -lkernel -lc++ -lSceSystemService/' \
+              Makefile
+            grep -n "^TITLE\|^VERSION\|^CONTENT_ID\|^LIBS" Makefile
+            make
+            ls -la *.pkg
+            cp ./*.pkg "$GITHUB_WORKSPACE/Echo-Engine-1.2.0-ps4.pkg"
+          } 2>&1 | tee ps4.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            tail -40 ps4.log | python3 -c "import sys; t=sys.stdin.read().replace('%','%25').replace('\r','').replace('\n','%0A'); print('::error title=PS4 build failed::'+t)"
+          fi
+          exit $status
+
+      - name: Add it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.2.0 >/dev/null 2>&1 || gh release create v1.2.0 --title "Echo Engine 1.2.0" --notes "Echo Engine 1.2.0"
+          gh release upload v1.2.0 Echo-Engine-1.2.0-ps4.pkg --clobber
